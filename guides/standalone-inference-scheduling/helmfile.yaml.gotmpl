@@ -1,0 +1,19 @@
+environments:
+  default: &DEFAULT
+    values: []
+
+---
+
+{{- $ns := .Namespace | default "llm-d-standalone-inference-scheduling" -}}
+{{- $rn := (env "RELEASE_NAME_POSTFIX") | default "inference-scheduling" -}}
+
+releases:
+  - name: {{ printf "standalone-%s" $rn | quote }}
+    namespace: {{ $ns }}
+    chart: oci://registry.k8s.io/gateway-api-inference-extension/charts/inferencepool
+    version: v1.1.0
+    installed: true
+    values:
+      - values.yaml
+    labels:
+      kind: inference-stack
