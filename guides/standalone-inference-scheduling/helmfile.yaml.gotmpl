@@ -1,14 +1,7 @@
 environments:
-  istio: &I
+  default: &DEFAULT
     values:
-      - ../prereq/standalone/common-configurations/istio.yaml
-  istioBench: &IB
-    values:
-      - ../prereq/standalone/common-configurations/istio.yaml
-      - ../prereq/standalone/common-configurations/benchmarking.yaml
-  kgateway: &KG
-    values:
-      - ../prereq/standalone/common-configurations/kgateway.yaml
+      - ../prereq/standalone/common-configurations/default.yaml
   gke: &GKE
     values:
       - ../prereq/standalone/common-configurations/gke.yaml
@@ -16,15 +9,13 @@ environments:
     values:
       - ../prereq/standalone/common-configurations/gke_tpu.yaml
   xpu: &XPU
-    <<: *I
+    <<: *DEFAULT
   gaudi: &GAUDI
-    <<: *I
+    <<: *DEFAULT
   cpu: &CPU
-    <<: *I
+    <<: *DEFAULT
   digitalocean: &DO
-    <<: *I
-  default: &DEFAULT
-    <<: *I
+    <<: *DEFAULT
 
 ---
 
@@ -38,9 +29,8 @@ repositories:
 releases:
   - name: {{ printf "gaie-%s" $rn | quote }}
     namespace: {{ $ns }}
-    # Need to wait a new release which include
-    chart: oci://registry.k8s.io/gateway-api-inference-extension/charts/inferencepool
-    version: v1.2.0-rc.2
+    chart: /Users/xiyue/go/src/github.com/kubernetes-sigs/gateway-api-inference-extension/config/charts/inferencepool
+    installed: true
     values:
       - gaie-standalone-inference-scheduling/values.yaml
     # Apply provider name if on GKE
@@ -55,23 +45,6 @@ releases:
               enabled: true
             prometheus:
               enabled: false
-    {{- end }}
-    # Apply destination rule for anything istio
-    {{- if or (eq .Environment.Name "istio") (eq .Environment.Name "default") (eq .Environment.Name "istioBench") (eq .Environment.Name "xpu") (eq .Environment.Name "gaudi") (eq .Environment.Name "cpu") }}
-      - provider:
-          name: {{ .Environment.Values.provider.name }}
-          istio:
-            {{ .Environment.Values.provider.istio | toYaml | nindent 12 }}
-      - provider:
-          istio:
-            destinationRule:
-              host: {{ printf "gaie-%s-epp.%s.svc.cluster.local" $rn $ns | quote }}
-    {{- end }}
-    # Apply log level only in bench setting
-    {{- if (eq .Environment.Name "istioBench") }}
-      - inferenceExtension:
-          flags:
-            {{ .Environment.Values.inferenceExtension.flags | toYaml | nindent 12 }}
     {{- end }}
     labels:
       kind: inference-stack
@@ -96,10 +69,6 @@ releases:
       - ms-inference-scheduling/digitalocean-values.yaml
     {{- else }}
       - ms-standalone-inference-scheduling/values.yaml
-    {{- end }}
-    {{- if (eq .Environment.Name "istioBench") }}
-      - routing:
-          {{ .Environment.Values.routing | toYaml | nindent 10 }}
     {{- end }}
     set:
     {{- if or (eq .Environment.Name "gke") (eq .Environment.Name "gke_tpu") }}

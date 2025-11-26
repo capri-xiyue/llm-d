@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide deploys the recommended out of the box [scheduling configuration](https://github.com/llm-d/llm-d-inference-scheduler/blob/main/docs/architecture.md) for most vLLM deployments, reducing tail latency and increasing throughput through load-aware and prefix-cache aware balancing. This can be run on a single GPU that can load [Qwen/Qwen3-0.6B](https://huggingface.co/Qwen/Qwen3-0.6B).
+This guide deploys the recommended out of the box inference scheduler using a sidecar proxy rather than a Gateway API provisioned one in [scheduling configuration](../inference-scheduling/README.md), for most vLLM deployments, reducing tail latency and increasing throughput through load-aware and prefix-cache aware balancing. This can be run on a single GPU that can load [Qwen/Qwen3-0.6B](https://huggingface.co/Qwen/Qwen3-0.6B).
 
 This profile defaults to the approximate prefix cache aware scorer, which only observes request traffic to predict prefix cache locality. The [precise prefix cache aware routing feature](../precise-prefix-cache-aware) improves hit rate by introspecting the vLLM instances for cache entries and will become the default in a future release.
 
@@ -21,6 +21,7 @@ This example out of the box requires 2 GPUs of any supported kind:
 - Ensure your cluster infrastructure is sufficient to [deploy high scale inference](../prereq/infrastructure)
 - [Create the `llm-d-hf-token` secret in your target namespace with the key `HF_TOKEN` matching a valid HuggingFace token](../prereq/client-setup/README.md#huggingface-token) to pull models.
 - Have the [Monitoring stack](../../docs/monitoring/README.md) installed on your system.
+- Have the [Gateway API Inference Extension CRD](../prereq/standalone/install-standalone-dependencies.sh) installed on your system
 
 
 ## Installation
