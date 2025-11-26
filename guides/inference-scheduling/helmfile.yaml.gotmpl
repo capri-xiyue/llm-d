@@ -102,17 +102,17 @@ releases:
       - {{ printf "gaie-%s" $rn | quote }}
     values:
     {{- if eq .Environment.Name "gke_tpu" }}
-      - ms-inference-scheduling/values_tpu.yaml
+      - ../common/ms-inference-scheduling/values_gke_tpu.yaml
     {{- else if eq .Environment.Name "xpu" }}
-      - ms-inference-scheduling/values_xpu.yaml
+      - ../common/ms-inference-scheduling/values_xpu.yaml
     {{- else if eq .Environment.Name "gaudi" }}
-      - ms-inference-scheduling/values-gaudi.yaml
+      - ../common/ms-inference-scheduling/values-gaudi.yaml
     {{- else if eq .Environment.Name "cpu" }}
-      - ms-inference-scheduling/values_cpu.yaml
+      - ../common/ms-inference-scheduling/values_cpu.yaml
     {{- else if eq .Environment.Name "digitalocean" }}
-      - ms-inference-scheduling/digitalocean-values.yaml
+      - ../common/ms-inference-scheduling/digitalocean-values.yaml
     {{- else }}
-      - ms-inference-scheduling/values.yaml
+      - ../common/ms-inference-scheduling/values.yaml
     {{- end }}
     {{- if (eq .Environment.Name "istioBench") }}
       - routing: 

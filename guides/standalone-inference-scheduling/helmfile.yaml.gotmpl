@@ -58,17 +58,17 @@ releases:
       - {{ printf "gaie-%s" $rn | quote }}
     values:
     {{- if eq .Environment.Name "gke_tpu" }}
-      - ms-standalone-inference-scheduling/values_tpu.yaml
+      - ../common/ms-inference-scheduling/values_tpu.yaml
     {{- else if eq .Environment.Name "xpu" }}
-      - ms-standalone-inference-scheduling/values_xpu.yaml
+      - ../common/ms-inference-scheduling/values_xpu.yaml
     {{- else if eq .Environment.Name "gaudi" }}
-      - ms-standalone-inference-scheduling/values-gaudi.yaml
+      - ../common/ms-inference-scheduling/values-gaudi.yaml
     {{- else if eq .Environment.Name "cpu" }}
-      - ms-standalone-inference-scheduling/values_cpu.yaml
+      - ../common/ms-inference-scheduling/values_cpu.yaml
     {{- else if eq .Environment.Name "digitalocean" }}
-      - ms-inference-scheduling/digitalocean-values.yaml
+      - ../common/ms-inference-scheduling/digitalocean-values.yaml
     {{- else }}
-      - ms-standalone-inference-scheduling/values.yaml
+      - ../common/ms-inference-scheduling/values.yaml
     {{- end }}
     set:
     {{- if or (eq .Environment.Name "gke") (eq .Environment.Name "gke_tpu") }}
