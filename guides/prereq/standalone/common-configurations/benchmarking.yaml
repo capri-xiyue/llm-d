@@ -1,0 +1,24 @@
+routing:
+  proxy:
+    zapLogLevel: error
+
+# GAIE values
+inferenceExtension:
+  flags:
+    v: 1
+    pool-group: "inference.networking.x-k8s.io"
+
+provider:
+  istio:
+    destinationRule:
+      trafficPolicy:
+        connectionPool:
+          http:
+            http1MaxPendingRequests: 256000
+            maxRequestsPerConnection: 256000
+            http2MaxRequests: 256000
+            idleTimeout: "900s"
+          tcp:
+            maxConnections: 256000
+            maxConnectionDuration: "1800s"
+            connectTimeout: "900s"

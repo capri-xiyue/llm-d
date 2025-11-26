@@ -1,0 +1,16 @@
+# GAIE values
+inferenceExtension:
+  flags: # empty flag overrides, so key always exists to pull values from, its just empty
+provider:
+  name: istio
+  istio:
+    destinationRule:
+      trafficPolicy:
+        tls:
+          mode: SIMPLE
+          insecureSkipVerify: true
+
+# MS values
+routing:
+  proxy:
+    zapLogLevel: debug

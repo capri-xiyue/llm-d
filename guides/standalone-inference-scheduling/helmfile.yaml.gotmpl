@@ -1,0 +1,110 @@
+environments:
+  istio: &I
+    values:
+      - ../prereq/standalone/common-configurations/istio.yaml
+  istioBench: &IB
+    values:
+      - ../prereq/standalone/common-configurations/istio.yaml
+      - ../prereq/standalone/common-configurations/benchmarking.yaml
+  kgateway: &KG
+    values:
+      - ../prereq/standalone/common-configurations/kgateway.yaml
+  gke: &GKE
+    values:
+      - ../prereq/standalone/common-configurations/gke.yaml
+  gke_tpu: &GKE_TPU
+    values:
+      - ../prereq/standalone/common-configurations/gke_tpu.yaml
+  xpu: &XPU
+    <<: *I
+  gaudi: &GAUDI
+    <<: *I
+  cpu: &CPU
+    <<: *I
+  digitalocean: &DO
+    <<: *I
+  default: &DEFAULT
+    <<: *I
+
+---
+
+{{- $ns := .Namespace | default "llm-d-standalone-inference-scheduling" -}}
+{{- $rn := (env "RELEASE_NAME_POSTFIX") | default "standalone-inference-scheduling" -}}
+
+repositories:
+  - name: llm-d-modelservice
+    url: https://llm-d-incubation.github.io/llm-d-modelservice/
+
+releases:
+  - name: {{ printf "gaie-%s" $rn | quote }}
+    namespace: {{ $ns }}
+    # Need to wait a new release which include
+    chart: oci://registry.k8s.io/gateway-api-inference-extension/charts/inferencepool
+    version: v1.2.0-rc.2
+    values:
+      - gaie-standalone-inference-scheduling/values.yaml
+    # Apply provider name if on GKE
+    {{- if or (eq .Environment.Name "gke") (eq .Environment.Name "gke_tpu") }}
+      - provider:
+          name: {{ .Environment.Values.provider.name }}
+        inferencePool:
+          apiVersion: {{ .Environment.Values.inferencePool.apiVersion }}
+        inferenceExtension:
+          monitoring:
+            gke:
+              enabled: true
+            prometheus:
+              enabled: false
+    {{- end }}
+    # Apply destination rule for anything istio
+    {{- if or (eq .Environment.Name "istio") (eq .Environment.Name "default") (eq .Environment.Name "istioBench") (eq .Environment.Name "xpu") (eq .Environment.Name "gaudi") (eq .Environment.Name "cpu") }}
+      - provider:
+          name: {{ .Environment.Values.provider.name }}
+          istio:
+            {{ .Environment.Values.provider.istio | toYaml | nindent 12 }}
+      - provider:
+          istio:
+            destinationRule:
+              host: {{ printf "gaie-%s-epp.%s.svc.cluster.local" $rn $ns | quote }}
+    {{- end }}
+    # Apply log level only in bench setting
+    {{- if (eq .Environment.Name "istioBench") }}
+      - inferenceExtension:
+          flags:
+            {{ .Environment.Values.inferenceExtension.flags | toYaml | nindent 12 }}
+    {{- end }}
+    labels:
+      kind: inference-stack
+
+  - name: {{ printf "ms-%s" $rn | quote }}
+    namespace: {{ $ns }}
+    chart: llm-d-modelservice/llm-d-modelservice
+    version: v0.3.8
+    installed: true
+    needs:
+      - {{ printf "gaie-%s" $rn | quote }}
+    values:
+    {{- if eq .Environment.Name "gke_tpu" }}
+      - ms-standalone-inference-scheduling/values_tpu.yaml
+    {{- else if eq .Environment.Name "xpu" }}
+      - ms-standalone-inference-scheduling/values_xpu.yaml
+    {{- else if eq .Environment.Name "gaudi" }}
+      - ms-standalone-inference-scheduling/values-gaudi.yaml
+    {{- else if eq .Environment.Name "cpu" }}
+      - ms-standalone-inference-scheduling/values_cpu.yaml
+    {{- else if eq .Environment.Name "digitalocean" }}
+      - ms-inference-scheduling/digitalocean-values.yaml
+    {{- else }}
+      - ms-standalone-inference-scheduling/values.yaml
+    {{- end }}
+    {{- if (eq .Environment.Name "istioBench") }}
+      - routing:
+          {{ .Environment.Values.routing | toYaml | nindent 10 }}
+    {{- end }}
+    set:
+    {{- if or (eq .Environment.Name "gke") (eq .Environment.Name "gke_tpu") }}
+      - name: "decode.monitoring.podmonitor.enabled"
+        value: false
+    {{- end }}
+    labels:
+      kind: inference-stack
