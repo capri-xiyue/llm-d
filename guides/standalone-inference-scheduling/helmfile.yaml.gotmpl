@@ -6,8 +6,7 @@ environments:
     values:
       - ../prereq/standalone/common-configurations/gke.yaml
   gke_tpu: &GKE_TPU
-    values:
-      - ../prereq/standalone/common-configurations/gke_tpu.yaml
+    <<: *GKE
   xpu: &XPU
     <<: *DEFAULT
   gaudi: &GAUDI
