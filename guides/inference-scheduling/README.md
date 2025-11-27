@@ -220,7 +220,7 @@ replicaset.apps/ms-inference-scheduling-llm-d-modelservice-decode-8ff7fd5b8    2
 ```
 **_NOTE:_** This assumes no other guide deployments in your given `${NAMESPACE}` and you have not changed the default release names via the `${RELEASE_NAME}` environment variable.
 
-<!-- TAB:END -->
+<!-- TABS:END -->
 
 ## Using the stack
 
