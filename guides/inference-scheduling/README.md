@@ -102,6 +102,7 @@ To deploy as a standalone inference scheduler, use the `-e standalone` flag, ex:
 
 ```bash
 helmfile apply -e standalone -n ${NAMESPACE}
+```
 
 <!-- TABS:END -->
 
