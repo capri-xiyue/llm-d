@@ -67,10 +67,11 @@ helmfile apply -e cpu -n ${NAMESPACE}
 
 ### Inference Request Scheduler and Hardware Options
 
+#### Inference Request Scheduler
 <!-- TABS:START -->
 
 <!-- TAB:Gateway Option -->
-#### Gateway Option
+##### Gateway Option
 
 **_NOTE:_** This uses Istio as the default gateway provider, see [Gateway Options](./README.md#gateway-options) for installing with a specific provider.
 
@@ -94,7 +95,7 @@ To see what gateway options are supported refer to our [gateway provider prereq 
 You can also customize your gateway, for more information on how to do that see our [gateway customization docs](../../docs/customizing-your-gateway.md).
 
 <!-- TAB: Standalone Option -->
-#### Standalone Option
+##### Standalone Option
 With this option, the inference scheduler is deployed along with a sidecar Envoy proxy instead of a proxy provisioned using the Kubernetes Gateway API.
 
 To deploy as a standalone inference scheduler, use the `-e standalone` flag, ex:
@@ -102,6 +103,9 @@ To deploy as a standalone inference scheduler, use the `-e standalone` flag, ex:
 ```bash
 helmfile apply -e standalone -n ${NAMESPACE}
 ````
+
+<!-- TABS:END -->
+
 #### Hardware Backends
 
 Currently in the `inference-scheduling` example we suppport configurations for `xpu`, `tpu`, `cpu`, and `cuda` GPUs. By default we use modelserver values supporting `cuda` GPUs, but to deploy on one of the other hardware backends you may use:
@@ -114,7 +118,6 @@ helmfile apply -e gke_tpu  -n ${NAMESPACE} # targets GKE externally managed as g
 helmfile apply -e cpu  -n ${NAMESPACE} # targets istio as gateway provider with CPU hardware
 ```
 
-<!-- TABS:END -->
 ##### CPU Inferencing
 This case expects using 4th Gen Intel Xeon processors (Sapphire Rapids) or later. 
 
