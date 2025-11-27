@@ -146,10 +146,10 @@ kubectl apply -f httproute.yaml -n ${NAMESPACE}
 
 <!-- TABS:START -->
 
-- Firstly, you should be able to list all helm releases to view the 3 charts got installed into your chosen namespace:
-
 <!-- TAB:Gateway Option -->
 ### Gateway option
+
+- Firstly, you should be able to list all helm releases to view the 3 charts got installed into your chosen namespace:
 
 ```bash
 helm list -n ${NAMESPACE}
@@ -188,6 +188,7 @@ replicaset.apps/ms-inference-scheduling-llm-d-modelservice-decode-8ff7fd5b8    2
 <!-- TAB: Standalone Option -->
 ### Standalone option
 
+- Firstly, you should be able to list all helm releases to view the 2 charts got installed into your chosen namespace:
 
 ```bash
 helm list -n ${NAMESPACE}
