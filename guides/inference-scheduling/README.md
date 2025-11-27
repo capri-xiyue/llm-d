@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide deploys the recommended out of the box [scheduling configuration](https://github.com/llm-d/llm-d-inference-scheduler/blob/main/docs/architecture.md), for most vLLM deployments, reducing tail latency and increasing throughput through load-aware and prefix-cache aware balancing. This can be run on a single GPU that can load [Qwen/Qwen3-0.6B](https://huggingface.co/Qwen/Qwen3-0.6B).
+This guide deploys the recommended out of the box [scheduling configuration](https://github.com/llm-d/llm-d-inference-scheduler/blob/main/docs/architecture.md) for most vLLM deployments, reducing tail latency and increasing throughput through load-aware and prefix-cache aware balancing. This can be run on a single GPU that can load [Qwen/Qwen3-0.6B](https://huggingface.co/Qwen/Qwen3-0.6B).
 
 This profile defaults to the approximate prefix cache aware scorer, which only observes request traffic to predict prefix cache locality. The [precise prefix cache aware routing feature](../precise-prefix-cache-aware) improves hit rate by introspecting the vLLM instances for cache entries and will become the default in a future release.
 
@@ -19,10 +19,9 @@ This example out of the box requires 2 GPUs of any supported kind:
 
 - Have the [proper client tools installed on your local system](../prereq/client-setup/README.md) to use this guide.
 - Ensure your cluster infrastructure is sufficient to [deploy high scale inference](../prereq/infrastructure)
-- Configure and deploy your [Gateway control plane](../prereq/gateway-provider/README.md) if you are not using `standalone`.
 - [Create the `llm-d-hf-token` secret in your target namespace with the key `HF_TOKEN` matching a valid HuggingFace token](../prereq/client-setup/README.md#huggingface-token) to pull models.
 - Have the [Monitoring stack](../../docs/monitoring/README.md) installed on your system.
-
+- Configure and deploy your [Gateway control plane](../prereq/gateway-provider/README.md) if you are not using `standalone` option.
 
 ## Installation
 
@@ -54,8 +53,10 @@ helmfile apply -e cpu -n ${NAMESPACE}
 
 ### Inference Request Scheduler and Hardware Options
 
-#### Gateway Options
-**Please skip it if you are using `standalone` option.**
+<!-- TABS:START -->
+
+<!-- TAB:Gateway Option -->
+#### Gateway Option
 
 **_NOTE:_** This uses Istio as the default gateway provider, see [Gateway Options](./README.md#gateway-options) for installing with a specific provider.
 
@@ -78,11 +79,11 @@ To see what gateway options are supported refer to our [gateway provider prereq 
 
 You can also customize your gateway, for more information on how to do that see our [gateway customization docs](../../docs/customizing-your-gateway.md).
 
-#### Standalone Options
-**Please skip it if you are using Gateway option.**
+<!-- TAB: Standalone Option -->
+#### Standalone Option
 With this option, inference scheduler is deployed along with a sidecar Envoy proxy without any Gateway provider usage.
 
-To deploy as a standalone inference scheduler, use the -e standalone flag, ex:
+To deploy as a standalone inference scheduler, use the `-e standalone` flag, ex:
 
 ```bash
 helmfile apply -e standalone -n ${NAMESPACE}
@@ -99,11 +100,13 @@ helmfile apply -e gke_tpu  -n ${NAMESPACE} # targets GKE externally managed as g
 helmfile apply -e cpu  -n ${NAMESPACE} # targets istio as gateway provider with CPU hardware
 ```
 
+<!-- TABS:END -->
 ##### CPU Inferencing
-
+<!-- TABS:START -->
 This case expects using 4th Gen Intel Xeon processors (Sapphire Rapids) or later. 
 
-### Install HTTPRoute When Using Gateway
+<!-- TAB: Gateway Option -->
+### Install HTTPRoute When Using Gateway option
 
 **Please skip it if you are using `standalone` option.**
 
@@ -126,11 +129,15 @@ kubectl apply -f httproute.gke.yaml -n ${NAMESPACE}
 ```bash
 kubectl apply -f httproute.yaml -n ${NAMESPACE}
 ```
+<!-- TABS:END -->
 ## Verify the Installation
+
+<!-- TABS:START -->
 
 - Firstly, you should be able to list all helm releases to view the 3 charts got installed into your chosen namespace:
 
 ### Gateway option
+<!-- TAB:Gateway Option -->
 
 ```bash
 helm list -n ${NAMESPACE}
@@ -166,6 +173,7 @@ replicaset.apps/infra-inference-scheduling-inference-gateway-istio-678767549   1
 replicaset.apps/ms-inference-scheduling-llm-d-modelservice-decode-8ff7fd5b8    2         2         2       3m56s
 ```
 ### Standalone option
+<!-- TAB: Standalone Option -->
 
 ```bash
 helm list -n ${NAMESPACE}
@@ -197,6 +205,8 @@ replicaset.apps/ms-inference-scheduling-llm-d-modelservice-decode-8ff7fd5b8    2
 ```
 **_NOTE:_** This assumes no other guide deployments in your given `${NAMESPACE}` and you have not changed the default release names via the `${RELEASE_NAME}` environment variable.
 
+<!-- TAB:END -->
+
 ## Using the stack
 
 For instructions on getting started making inference requests see [our docs](../../docs/getting-started-inferencing.md)
@@ -218,10 +228,10 @@ helm uninstall ms-inference-scheduling -n ${NAMESPACE}
 **_NOTE:_** If you set the `$RELEASE_NAME_POSTFIX` environment variable, your release names will be different from the command above: `infra-$RELEASE_NAME_POSTFIX`, `gaie-$RELEASE_NAME_POSTFIX` and `ms-$RELEASE_NAME_POSTFIX`.
 
 ### Cleanup HTTPRoute
-**Please skip it if you are using `standalone` option.**
+<!-- TABS:START -->
 
 Follow provider specific instructions for deleting HTTPRoute.
-
+<!-- TAB: Gateway Option -->
 #### Cleanup for "kgateway" or "istio"
 
 ```bash
@@ -239,7 +249,7 @@ kubectl delete -f httproute.gke.yaml -n ${NAMESPACE}
 ```bash
 kubectl delete -f httproute.yaml -n ${NAMESPACE}
 ```
-
+<!-- TABS:END -->
 ## Customization
 
 For information on customizing a guide and tips to build your own, see [our docs](../../docs/customizing-a-guide.md)
