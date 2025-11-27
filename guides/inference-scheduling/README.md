@@ -116,10 +116,8 @@ helmfile apply -e cpu  -n ${NAMESPACE} # targets istio as gateway provider with 
 
 <!-- TABS:END -->
 ##### CPU Inferencing
-<!-- TABS:START -->
 This case expects using 4th Gen Intel Xeon processors (Sapphire Rapids) or later. 
 
-<!-- TAB: Gateway Option -->
 ### Install HTTPRoute When Using Gateway option
 
 Follow provider specific instructions for installing HTTPRoute.
@@ -141,7 +139,7 @@ kubectl apply -f httproute.gke.yaml -n ${NAMESPACE}
 ```bash
 kubectl apply -f httproute.yaml -n ${NAMESPACE}
 ```
-<!-- TABS:END -->
+
 ## Verify the Installation
 
 <!-- TABS:START -->
