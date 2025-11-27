@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide deploys the recommended out of the box [scheduling configuration](https://github.com/llm-d/llm-d-inference-scheduler/blob/main/docs/architecture.md) or inference scheduler using a sidecar proxy, for most vLLM deployments, reducing tail latency and increasing throughput through load-aware and prefix-cache aware balancing. This can be run on a single GPU that can load [Qwen/Qwen3-0.6B](https://huggingface.co/Qwen/Qwen3-0.6B).
+This guide deploys the recommended out of the box [scheduling configuration](https://github.com/llm-d/llm-d-inference-scheduler/blob/main/docs/architecture.md), for most vLLM deployments, reducing tail latency and increasing throughput through load-aware and prefix-cache aware balancing. This can be run on a single GPU that can load [Qwen/Qwen3-0.6B](https://huggingface.co/Qwen/Qwen3-0.6B).
 
 This profile defaults to the approximate prefix cache aware scorer, which only observes request traffic to predict prefix cache locality. The [precise prefix cache aware routing feature](../precise-prefix-cache-aware) improves hit rate by introspecting the vLLM instances for cache entries and will become the default in a future release.
 
@@ -52,12 +52,12 @@ helmfile apply -e cpu -n ${NAMESPACE}
 
 **_NOTE:_** You can set the `$RELEASE_NAME_POSTFIX` env variable to change the release names. This is how we support concurrent installs. Ex: `RELEASE_NAME_POSTFIX=inference-scheduling-2 helmfile apply -n ${NAMESPACE}`
 
-**_NOTE:_** This uses Istio as the default provider, see [Gateway Options](./README.md#gateway-options) for installing with a specific provider.
-
-### Gateway/Standalone and Hardware Options
+### Inference Request Scheduler and Hardware Options
 
 #### Gateway Options
-**Please skip it if you are using `standalone`.**
+**Please skip it if you are using `standalone` option.**
+
+**_NOTE:_** This uses Istio as the default gateway provider, see [Gateway Options](./README.md#gateway-options) for installing with a specific provider.
 
 To specify your gateway choice you can use the `-e <gateway option>` flag, ex:
 
@@ -78,10 +78,11 @@ To see what gateway options are supported refer to our [gateway provider prereq 
 
 You can also customize your gateway, for more information on how to do that see our [gateway customization docs](../../docs/customizing-your-gateway.md).
 
-#### standalone Options
-**Please skip it if you are using Gateway.**
+#### Standalone Options
+**Please skip it if you are using Gateway option.**
+With this option, inference scheduler is deployed along with a sidecar Envoy proxy without any Gateway provider usage.
 
-To specify your standalone choice you can use the `-e` flag, ex:
+To deploy as a standalone inference scheduler, use the -e standalone flag, ex:
 
 ```bash
 helmfile apply -e standalone -n ${NAMESPACE}
@@ -104,7 +105,7 @@ This case expects using 4th Gen Intel Xeon processors (Sapphire Rapids) or later
 
 ### Install HTTPRoute When Using Gateway
 
-**Please skip it if you are using `standalone`.**
+**Please skip it if you are using `standalone` option.**
 
 Follow provider specific instructions for installing HTTPRoute.
 
@@ -217,7 +218,7 @@ helm uninstall ms-inference-scheduling -n ${NAMESPACE}
 **_NOTE:_** If you set the `$RELEASE_NAME_POSTFIX` environment variable, your release names will be different from the command above: `infra-$RELEASE_NAME_POSTFIX`, `gaie-$RELEASE_NAME_POSTFIX` and `ms-$RELEASE_NAME_POSTFIX`.
 
 ### Cleanup HTTPRoute
-**Please skip it if you are using `standalone`.**
+**Please skip it if you are using `standalone` option.**
 
 Follow provider specific instructions for deleting HTTPRoute.
 
