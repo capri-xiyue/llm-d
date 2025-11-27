@@ -101,7 +101,7 @@ To deploy as a standalone inference scheduler, use the `-e standalone` flag, ex:
 
 ```bash
 helmfile apply -e standalone -n ${NAMESPACE}
-
+````
 #### Hardware Backends
 
 Currently in the `inference-scheduling` example we suppport configurations for `xpu`, `tpu`, `cpu`, and `cuda` GPUs. By default we use modelserver values supporting `cuda` GPUs, but to deploy on one of the other hardware backends you may use:
