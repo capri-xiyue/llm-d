@@ -17,11 +17,25 @@ This example out of the box requires 2 GPUs of any supported kind:
 
 ## Prerequisites
 
+<!-- TABS:START -->
+
+<!-- TAB:Gateway Option -->
+### Gateway Option
+
 - Have the [proper client tools installed on your local system](../prereq/client-setup/README.md) to use this guide.
 - Ensure your cluster infrastructure is sufficient to [deploy high scale inference](../prereq/infrastructure)
 - [Create the `llm-d-hf-token` secret in your target namespace with the key `HF_TOKEN` matching a valid HuggingFace token](../prereq/client-setup/README.md#huggingface-token) to pull models.
 - Have the [Monitoring stack](../../docs/monitoring/README.md) installed on your system.
-- Configure and deploy your [Gateway control plane](../prereq/gateway-provider/README.md) if you are not using `standalone` option.
+- Configure and deploy your [Gateway control plane](../prereq/gateway-provider/README.md) 
+
+<!-- TAB:Standalone Option -->
+### Standalone Option
+- Have the [proper client tools installed on your local system](../prereq/client-setup/README.md) to use this guide.
+- Ensure your cluster infrastructure is sufficient to [deploy high scale inference](../prereq/infrastructure)
+- [Create the `llm-d-hf-token` secret in your target namespace with the key `HF_TOKEN` matching a valid HuggingFace token](../prereq/client-setup/README.md#huggingface-token) to pull models.
+- Have the [Monitoring stack](../../docs/monitoring/README.md) installed on your system.
+
+<!-- TABS:END -->
 
 ## Installation
 
@@ -81,7 +95,7 @@ You can also customize your gateway, for more information on how to do that see 
 
 <!-- TAB: Standalone Option -->
 #### Standalone Option
-With this option, inference scheduler is deployed along with a sidecar Envoy proxy without any Gateway provider usage.
+With this option, the inference scheduler is deployed along with a sidecar Envoy proxy instead of a proxy provisioned using the Kubernetes Gateway API.
 
 To deploy as a standalone inference scheduler, use the `-e standalone` flag, ex:
 
@@ -107,8 +121,6 @@ This case expects using 4th Gen Intel Xeon processors (Sapphire Rapids) or later
 
 <!-- TAB: Gateway Option -->
 ### Install HTTPRoute When Using Gateway option
-
-**Please skip it if you are using `standalone` option.**
 
 Follow provider specific instructions for installing HTTPRoute.
 
@@ -136,8 +148,8 @@ kubectl apply -f httproute.yaml -n ${NAMESPACE}
 
 - Firstly, you should be able to list all helm releases to view the 3 charts got installed into your chosen namespace:
 
-### Gateway option
 <!-- TAB:Gateway Option -->
+### Gateway option
 
 ```bash
 helm list -n ${NAMESPACE}
@@ -172,8 +184,10 @@ replicaset.apps/gaie-inference-scheduling-epp-f8fbd9897                        1
 replicaset.apps/infra-inference-scheduling-inference-gateway-istio-678767549   1         1         1       4m4s
 replicaset.apps/ms-inference-scheduling-llm-d-modelservice-decode-8ff7fd5b8    2         2         2       3m56s
 ```
-### Standalone option
+
 <!-- TAB: Standalone Option -->
+### Standalone option
+
 
 ```bash
 helm list -n ${NAMESPACE}
@@ -220,18 +234,16 @@ To remove the deployment:
 helmfile destroy -n ${NAMESPACE}
 
 # Or uninstall manually
-helm uninstall infra-inference-scheduling -n ${NAMESPACE}
+helm uninstall infra-inference-scheduling -n ${NAMESPACE} --ignore-not-found
 helm uninstall gaie-inference-scheduling -n ${NAMESPACE}
 helm uninstall ms-inference-scheduling -n ${NAMESPACE}
 ```
 
 **_NOTE:_** If you set the `$RELEASE_NAME_POSTFIX` environment variable, your release names will be different from the command above: `infra-$RELEASE_NAME_POSTFIX`, `gaie-$RELEASE_NAME_POSTFIX` and `ms-$RELEASE_NAME_POSTFIX`.
 
-### Cleanup HTTPRoute
-<!-- TABS:START -->
+### Cleanup HTTPRoute when using Gateway option
 
 Follow provider specific instructions for deleting HTTPRoute.
-<!-- TAB: Gateway Option -->
 #### Cleanup for "kgateway" or "istio"
 
 ```bash
@@ -249,7 +261,6 @@ kubectl delete -f httproute.gke.yaml -n ${NAMESPACE}
 ```bash
 kubectl delete -f httproute.yaml -n ${NAMESPACE}
 ```
-<!-- TABS:END -->
 ## Customization
 
 For information on customizing a guide and tips to build your own, see [our docs](../../docs/customizing-a-guide.md)
