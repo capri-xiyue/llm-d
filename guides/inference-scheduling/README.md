@@ -66,13 +66,9 @@ helmfile apply -e cpu -n ${NAMESPACE}
 
 **_NOTE:_** You can set the `$RELEASE_NAME_POSTFIX` env variable to change the release names. This is how we support concurrent installs. Ex: `RELEASE_NAME_POSTFIX=inference-scheduling-2 helmfile apply -n ${NAMESPACE}`
 
-### Inference Request Scheduler and Hardware Options
+### Gateway and Hardware Options
 
-#### Inference Request Scheduler
-<!-- TABS:START -->
-
-<!-- TAB:Gateway Option -->
-##### Gateway Option
+#### Gateway Options
 
 **_NOTE:_** This uses Istio as the default gateway provider, see [Gateway Option](#gateway-option) for installing with a specific provider.
 
@@ -93,8 +89,6 @@ helmfile apply -e digitalocean -n ${NAMESPACE}
 To see what gateway options are supported refer to our [gateway provider prereq doc](../prereq/gateway-provider/README.md#supported-providers). Gateway configurations per provider are tracked in the [gateway-configurations directory](../prereq/gateway-provider/common-configurations/).
 
 You can also customize your gateway, for more information on how to do that see our [gateway customization docs](../../docs/customizing-your-gateway.md).
-
-<!-- TABS:END -->
 
 #### Hardware Backends
 
@@ -136,9 +130,6 @@ kubectl apply -f httproute.yaml -n ${NAMESPACE}
 
 ## Verify the Installation
 
-<!-- TABS:START -->
-
-<!-- TAB:Gateway Option -->
 ### Gateway option
 
 - Firstly, you should be able to list all helm releases to view the 3 charts got installed into your chosen namespace:
@@ -183,8 +174,6 @@ replicaset.apps/gaie-inference-scheduling-epp-59c5f64d7b                        
 replicaset.apps/infra-inference-scheduling-inference-gateway-istio-55fd84c7fd   1         1         1       36m
 replicaset.apps/ms-inference-scheduling-llm-d-modelservice-decode-866b7c8768    8         8         8       35m
 ```
-
-<!-- TABS:END -->
 
 ## Using the stack
 
