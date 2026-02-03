@@ -130,8 +130,6 @@ kubectl apply -f httproute.yaml -n ${NAMESPACE}
 
 ## Verify the Installation
 
-### Gateway option
-
 - Firstly, you should be able to list all helm releases to view the 3 charts got installed into your chosen namespace:
 
 ```bash
