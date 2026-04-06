@@ -62,7 +62,7 @@ decode:
       - -c
     args:
       - |
-        source /usr/local/gib/scripts/set_nccl_env.sh
+        source /usr/local/gib/scripts/set_nccl_env.sh || { echo "Error: NCCL env script not found. Exiting."; exit 1; }
         export LD_LIBRARY_PATH=$(find / -name libcuda.so.1 -printf '%h\n' 2>/dev/null | sed ':a; N; $!ba; s/\n/:/g'):${LD_LIBRARY_PATH}
         echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
         export LIBRARY_PATH=$(find / -name libcuda.so.1 -printf '%h\n' 2>/dev/null | head -1):${LIBRARY_PATH}
@@ -159,7 +159,7 @@ prefill:
       - -c
     args:
       - |
-        source /usr/local/gib/scripts/set_nccl_env.sh
+        source /usr/local/gib/scripts/set_nccl_env.sh || { echo "Error: NCCL env script not found. Exiting."; exit 1; }
         export LD_LIBRARY_PATH=$(find / -name libcuda.so.1 -printf '%h\n' 2>/dev/null | sed ':a; N; $!ba; s/\n/:/g'):${LD_LIBRARY_PATH}
         echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
         export LIBRARY_PATH=$(find / -name libcuda.so.1 -printf '%h\n' 2>/dev/null | head -1):${LIBRARY_PATH}
