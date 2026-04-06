@@ -78,30 +78,6 @@ helmfile apply -e cpu -n ${NAMESPACE}
 <details>
 <summary><h3>Advanced Gateway and Hardware Options</h3></summary>
 
-#### Gateway Options
-
-**_NOTE:_** This uses Istio as the default gateway provider, see [Gateway Options](#gateway-options) for installing with a specific provider.
-**_WARNING:_** `kgateway` is deprecated in llm-d and will be removed in the next release. Prefer `agentgateway` for new self-installed inference deployments.
-
-To specify your gateway choice you can use the `-e <gateway option>` flag, ex:
-
-```bash
-helmfile apply -e agentgateway -n ${NAMESPACE} # preferred agentgateway path
-helmfile apply -e kgateway -n ${NAMESPACE}     # deprecated migration path
-```
-
-For DigitalOcean Kubernetes Service (DOKS):
-
-```bash
-helmfile apply -e digitalocean -n ${NAMESPACE}
-```
-
- **_NOTE:_** DigitalOcean deployment uses public Qwen/Qwen3-0.6B model (no HuggingFace token required) and is optimized for DOKS GPU nodes with automatic tolerations and node selectors. Gateway API v1 compatibility fixes are automatically included.
-
-To see what gateway options are supported refer to our [gateway provider prereq doc](../prereq/gateway-provider/README.md#supported-providers). Gateway configurations per provider are tracked in the [gateway-configurations directory](../prereq/gateway-provider/common-configurations/).
-
-You can also customize your gateway, for more information on how to do that see our [gateway customization docs](../../docs/customizing-your-gateway.md).
-
 #### Hardware Backends
 
 Currently in the `inference-scheduling` example we support configurations for `amd`, `xpu`, `tpu`, `cpu`, `hpu` (Intel Gaudi) and `cuda` GPUs. By default we use modelserver values supporting `cuda` GPUs, but to deploy on one of the other hardware backends you may use:
@@ -151,7 +127,33 @@ helmfile apply -n ${NAMESPACE}
 
 **_NOTE:_** Currently you can use this option only with the default hardware (i.e., `GPU` hardware).
 
-### Install HTTPRoute When Using Gateway option
+### Gateway/Standalone Options
+
+=== "With Gateway"
+
+**_NOTE:_** This uses Istio as the default gateway provider, see [Gateway Options](#gateway-options) for installing with a specific provider.
+**_WARNING:_** `kgateway` is deprecated in llm-d and will be removed in the next release. Prefer `agentgateway` for new self-installed inference deployments.
+
+To specify your gateway choice you can use the `-e <gateway option>` flag, ex:
+
+```bash
+helmfile apply -e agentgateway -n ${NAMESPACE} # preferred agentgateway path
+helmfile apply -e kgateway -n ${NAMESPACE}     # deprecated migration path
+```
+
+For DigitalOcean Kubernetes Service (DOKS):
+
+```bash
+helmfile apply -e digitalocean -n ${NAMESPACE}
+```
+
+ **_NOTE:_** DigitalOcean deployment uses public Qwen/Qwen3-0.6B model (no HuggingFace token required) and is optimized for DOKS GPU nodes with automatic tolerations and node selectors. Gateway API v1 compatibility fixes are automatically included.
+
+To see what gateway options are supported refer to our [gateway provider prereq doc](../prereq/gateway-provider/README.md#supported-providers). Gateway configurations per provider are tracked in the [gateway-configurations directory](../prereq/gateway-provider/common-configurations/).
+
+You can also customize your gateway, for more information on how to do that see our [gateway customization docs](../../docs/customizing-your-gateway.md).
+
+#### Install HTTPRoute When Using Gateway option
 
 Follow provider specific instructions for installing HTTPRoute.
 
@@ -169,25 +171,25 @@ sed -e "s/infra-inference-scheduling-inference-gateway/infra-my-custom-inference
 kubectl apply -f httproute-custom.yaml -n ${NAMESPACE}
 ```
 
-#### Install for "agentgateway", "kgateway" (deprecated), or "istio"
+##### Install for "agentgateway", "kgateway" (deprecated), or "istio"
 
 ```bash
 kubectl apply -f httproute.yaml -n ${NAMESPACE}
 ```
 
-#### Install for "gke"
+##### Install for "gke"
 
 ```bash
 kubectl apply -f httproute.gke.yaml -n ${NAMESPACE}
 ```
 
-#### Install for "digitalocean"
+##### Install for "digitalocean"
 
 ```bash
 kubectl apply -f httproute.yaml -n ${NAMESPACE}
 ```
 
-## Verify the Installation
+### Verify the Installation
 
 - Firstly, you should be able to list all helm releases to view the 3 charts got installed into your chosen namespace:
 
@@ -232,7 +234,7 @@ replicaset.apps/infra-inference-scheduling-inference-gateway-istio-55fd84c7fd   
 replicaset.apps/ms-inference-scheduling-llm-d-modelservice-decode-866b7c8768    8         8         8       35m
 ```
 
-### Test the Deployment
+#### Test the Deployment
 
 You can verify the deployment is working by creating a port-forward to the Istio gateway service and sending a curl command:
 
@@ -267,6 +269,89 @@ curl -X POST http://localhost:8080/v1/chat/completions \
 ```
 
 **_NOTE:_** If you set a custom `RELEASE_NAME_POSTFIX`, replace `infra-inference-scheduling-inference-gateway-istio` with `infra-${RELEASE_NAME_POSTFIX}-inference-gateway-istio` in the port-forward command.
+
+=== "With Standalone"
+
+```bash
+export GAIE_MODE=standalone 
+helmfile apply -n ${NAMESPACE}     
+```
+
+### Verify the Installation
+
+- Firstly, you should be able to list all helm releases to view the 3 charts got installed into your chosen namespace:
+
+```bash
+helm list -n ${NAMESPACE}
+NAME                        NAMESPACE                   REVISION  UPDATED                                 STATUS      CHART                       APP VERSION
+gaie-inference-scheduling   llm-d-inference-scheduler   1         2026-01-26 15:11:26.506854 +0200 IST    deployed    standalone-v1.4.0           v1.4.0
+infra-inference-scheduling  llm-d-inference-scheduler   1         2026-01-26 15:11:21.008163 +0200 IST    deployed    llm-d-infra-v1.4.0          v0.4.0
+ms-inference-scheduling     llm-d-inference-scheduler   1         2026-01-26 15:11:39.385111 +0200 IST    deployed    llm-d-modelservice-v0.4.9   v0.4.0
+```
+
+- Out of the box with this example you should have the following resources:
+
+```bash
+kubectl get all -n ${NAMESPACE}
+NAME                                                                  READY   STATUS    RESTARTS   AGE
+pod/gaie-inference-scheduling-epp-59c5f64d7b-b5j2d                    2/2     Running   0          36m
+pod/ms-inference-scheduling-llm-d-modelservice-decode-866b7c8795szd   1/1     Running   0          35m
+pod/ms-inference-scheduling-llm-d-modelservice-decode-866b7c87cdntk   1/1     Running   0          35m
+pod/ms-inference-scheduling-llm-d-modelservice-decode-866b7c87cnxxq   1/1     Running   0          35m
+pod/ms-inference-scheduling-llm-d-modelservice-decode-866b7c87fvtjf   1/1     Running   0          35m
+pod/ms-inference-scheduling-llm-d-modelservice-decode-866b7c87jqt27   1/1     Running   0          35m
+pod/ms-inference-scheduling-llm-d-modelservice-decode-866b7c87kwxc6   1/1     Running   0          35m
+pod/ms-inference-scheduling-llm-d-modelservice-decode-866b7c87rld4t   1/1     Running   0          35m
+pod/ms-inference-scheduling-llm-d-modelservice-decode-866b7c87xvbmp   1/1     Running   0          35m
+
+NAME                                                         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)                      AGE
+service/gaie-inference-scheduling-epp                        ClusterIP   172.30.240.45    <none>        9002/TCP,9090/TCP,8081/TCP   36m
+service/gaie-inference-scheduling-ip-18c12339                ClusterIP   None             <none>        54321/TCP                    36m
+
+NAME                                                                 READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/gaie-inference-scheduling-epp                        1/1     1            1           36m
+deployment.apps/ms-inference-scheduling-llm-d-modelservice-decode    8/8     8            8           35m
+
+NAME                                                                            DESIRED   CURRENT   READY   AGE
+replicaset.apps/gaie-inference-scheduling-epp-59c5f64d7b                        1         1         1       36m
+replicaset.apps/ms-inference-scheduling-llm-d-modelservice-decode-866b7c8768    8         8         8       35m
+```
+
+#### Test the Deployment
+
+You can verify the deployment is working by creating a port-forward to the Istio gateway service and sending a curl command:
+
+```bash
+# Create port-forward to the gateway service
+kubectl port-forward -n ${NAMESPACE} svc/gaie-inference-scheduling-epp 8080:8081 
+```
+
+In another terminal, send a test request:
+
+```bash
+# Test with a simple completion request
+curl -X POST http://localhost:8080/v1/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "Qwen/Qwen3-32B",
+    "prompt": "Hello, how are you?",
+    "max_tokens": 50
+  }'
+```
+
+Or test with a chat completion:
+
+```bash
+curl -X POST http://localhost:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "Qwen/Qwen3-32B",
+    "messages": [{"role": "user", "content": "Hello, how are you?"}],
+    "max_tokens": 50
+  }'
+```
+
+**_NOTE:_** If you set a custom `RELEASE_NAME_POSTFIX`, replace `gaie-inference-scheduling-epp` with `gaie-${RELEASE_NAME_POSTFIX}-epp` in the port-forward command.
 
 ## Using the stack
 

@@ -32,6 +32,7 @@ environments:
 
 {{- $ns := .Namespace | default "llm-d-inference-scheduling" -}}
 {{- $rn := (env "RELEASE_NAME_POSTFIX") | default "inference-scheduling" -}}
+{{- $gaieMode := (env "GAIE_MODE" | default "inferencepool") | trim -}}
 
 repositories:
   - name: llm-d-modelservice
@@ -44,7 +45,7 @@ releases:
     namespace: {{ $ns }}
     chart: llm-d-infra/llm-d-infra
     version: v1.4.0
-    installed:  true
+    installed: true
     labels:
       type: infrastructure
       kind: inference-stack
@@ -54,39 +55,34 @@ releases:
 
   - name: {{ printf "gaie-%s" $rn | quote }}
     namespace: {{ $ns }}
+    {{- if eq $gaieMode "standalone" }}
+    chart: oci://registry.k8s.io/gateway-api-inference-extension/charts/standalone
+    {{- else }}
     chart: oci://registry.k8s.io/gateway-api-inference-extension/charts/inferencepool
+    {{- end }}
     version: v1.4.0
     installed: true
     needs:
       - {{ printf "infra-%s" $rn | quote }}
     values:
-      {{- if eq (env "INFERENCE_SERVER") "sglang" }}
-      - gaie-inference-scheduling/values_sglang.yaml
+      {{- if eq $gaieMode "standalone" }}
+      - gaie-inference-scheduling/values_epp_standalone.yaml
       {{- else }}
+        {{- if eq (env "INFERENCE_SERVER") "sglang" }}
+      - gaie-inference-scheduling/values_sglang.yaml
+        {{- else }}
       - gaie-inference-scheduling/values.yaml
+        {{- end }}
       {{- end }}
-    # Apply provider name if on GKE
-    {{- if or (eq .Environment.Name "gke") (eq .Environment.Name "gke_tpu_v6") (eq .Environment.Name "gke_tpu_v7") }}
+
+      {{- if or (eq .Environment.Name "gke") (eq .Environment.Name "gke_tpu_v6") (eq .Environment.Name "gke_tpu_v7") }}
       - provider:
           name: {{ .Environment.Values.provider.name }}
         inferenceExtension:
           monitoring:
             prometheus:
               enabled: true
-    {{- end }}
-    # Apply destination rule for anything istio
-    {{- if or (eq .Environment.Name "istio") (eq .Environment.Name "default") (eq .Environment.Name "amd") (eq .Environment.Name "xpu") (eq .Environment.Name "hpu") }}
-      - provider:
-          name: {{ .Environment.Values.provider.name }}
-          istio:
-            {{ .Environment.Values.provider.istio | toYaml | nindent 12 }}
-      - provider:
-          istio:
-            destinationRule:
-              host: {{ printf "gaie-%s-epp.%s.svc.cluster.local" $rn $ns | quote }}
-    {{- end }}
-    labels:
-      kind: inference-stack
+      {{- end }}
 
   - name: {{ printf "ms-%s" $rn | quote }}
     namespace: {{ $ns }}
