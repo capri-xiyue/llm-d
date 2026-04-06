@@ -128,8 +128,10 @@ helmfile apply -n ${NAMESPACE}
 **_NOTE:_** Currently you can use this option only with the default hardware (i.e., `GPU` hardware).
 
 ### Gateway/Standalone Options
+<!-- TABS:START -->
 
-=== "With Gateway"
+<!-- TAB:Gateway Option -->
+#### Gateway Options
 
 **_NOTE:_** This uses Istio as the default gateway provider, see [Gateway Options](#gateway-options) for installing with a specific provider.
 **_WARNING:_** `kgateway` is deprecated in llm-d and will be removed in the next release. Prefer `agentgateway` for new self-installed inference deployments.
@@ -189,7 +191,7 @@ kubectl apply -f httproute.gke.yaml -n ${NAMESPACE}
 kubectl apply -f httproute.yaml -n ${NAMESPACE}
 ```
 
-### Verify the Installation
+#### Verify the Installation
 
 - Firstly, you should be able to list all helm releases to view the 3 charts got installed into your chosen namespace:
 
@@ -270,7 +272,10 @@ curl -X POST http://localhost:8080/v1/chat/completions \
 
 **_NOTE:_** If you set a custom `RELEASE_NAME_POSTFIX`, replace `infra-inference-scheduling-inference-gateway-istio` with `infra-${RELEASE_NAME_POSTFIX}-inference-gateway-istio` in the port-forward command.
 
-=== "With Standalone"
+<!-- TABS:END -->
+
+<!-- TAB: Standalone Option -->
+#### Standalone option
 
 ```bash
 export GAIE_MODE=standalone 
@@ -352,7 +357,7 @@ curl -X POST http://localhost:8080/v1/chat/completions \
 ```
 
 **_NOTE:_** If you set a custom `RELEASE_NAME_POSTFIX`, replace `gaie-inference-scheduling-epp` with `gaie-${RELEASE_NAME_POSTFIX}-epp` in the port-forward command.
-
+<!-- TABS:END -->
 ## Using the stack
 
 For instructions on getting started making inference requests see [our docs](../../docs/getting-started-inferencing.md)
