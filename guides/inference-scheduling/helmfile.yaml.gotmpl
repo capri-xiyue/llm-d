@@ -45,7 +45,7 @@ releases:
     namespace: {{ $ns }}
     chart: llm-d-infra/llm-d-infra
     version: v1.4.0
-    installed: true
+    installed:  true
     labels:
       type: infrastructure
       kind: inference-stack
@@ -74,15 +74,28 @@ releases:
       - gaie-inference-scheduling/values.yaml
         {{- end }}
       {{- end }}
-
-      {{- if or (eq .Environment.Name "gke") (eq .Environment.Name "gke_tpu_v6") (eq .Environment.Name "gke_tpu_v7") }}
+    # Apply provider name if on GKE
+    {{- if or (eq .Environment.Name "gke") (eq .Environment.Name "gke_tpu_v6") (eq .Environment.Name "gke_tpu_v7") }}
       - provider:
           name: {{ .Environment.Values.provider.name }}
         inferenceExtension:
           monitoring:
             prometheus:
               enabled: true
-      {{- end }}
+    {{- end }}
+    # Apply destination rule for anything istio
+    {{- if or (eq .Environment.Name "istio") (eq .Environment.Name "default") (eq .Environment.Name "amd") (eq .Environment.Name "xpu") (eq .Environment.Name "hpu") }}
+      - provider:
+          name: {{ .Environment.Values.provider.name }}
+          istio:
+            {{ .Environment.Values.provider.istio | toYaml | nindent 12 }}
+      - provider:
+          istio:
+            destinationRule:
+              host: {{ printf "gaie-%s-epp.%s.svc.cluster.local" $rn $ns | quote }}
+    {{- end }}
+    labels:
+      kind: inference-stack
 
   - name: {{ printf "ms-%s" $rn | quote }}
     namespace: {{ $ns }}
