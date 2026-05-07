@@ -8,18 +8,21 @@ spec:
     spec:
       containers:
         - name: modelserver
-          command: ["vllm", "serve"]
+          command: ["sglang", "serve"]
           args:
-            - "Qwen/Qwen3-32B"
-            - "--disable-access-log-for-endpoints=/health,/metrics,/v1/models"
-            - "--tensor-parallel-size=2"
+            - "--model-path=Qwen/Qwen3-32B"
+            - "--host=0.0.0.0"
+            - "--port=8000"
+            - "--log-level=info"
+            - "--enable-metrics"
+            - "--uvicorn-access-log-exclude-prefixes=/metrics"
             # Uncomment for distributed tracing
+            # - "--enable-trace"
             # - "--otlp-traces-endpoint=http://otel-collector:4317"
-            # - "--collect-detailed-traces=all"
           # env:
           #   # Uncomment for distributed tracing env vars
           #   - name: OTEL_SERVICE_NAME
-          #     value: "vllm-decode"
+          #     value: "sglang-decode"
           #   - name: OTEL_EXPORTER_OTLP_ENDPOINT
           #     value: "http://otel-collector:4317"
           #   - name: OTEL_TRACES_EXPORTER
@@ -30,35 +33,36 @@ spec:
           #     value: "0.1"
           resources:
             limits:
-              cpu: "16"
-              memory: 100Gi
+              cpu: "32"
+              memory: 64Gi
               amd.com/gpu: 2
             requests:
-              cpu: "8"
-              memory: 100Gi
+              cpu: "32"
+              memory: 32Gi
               amd.com/gpu: 2
           volumeMounts:
+            - mountPath: /.config
+              name: metrics-volume
             - mountPath: /dev/shm
-              name: shm
-            - mountPath: /.cache
-              name: torch-compile-cache
+              name: dshm
           startupProbe:
             initialDelaySeconds: 15
             periodSeconds: 30
             timeoutSeconds: 5
             failureThreshold: 120
           livenessProbe:
-            periodSeconds: 10
-            timeoutSeconds: 5
-            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 30
+            failureThreshold: 5
           readinessProbe:
             periodSeconds: 5
             timeoutSeconds: 2
             failureThreshold: 3
       volumes:
-        - name: shm
+        - name: metrics-volume
+          emptyDir: {}
+        - name: dshm
           emptyDir:
             medium: Memory
             sizeLimit: 20Gi
-        - name: torch-compile-cache
-          emptyDir: {}
