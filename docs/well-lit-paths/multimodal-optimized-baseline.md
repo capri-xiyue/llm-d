@@ -10,7 +10,7 @@ LLM requests break all three assumptions. Multimodal LLM requests (containing im
 The **llm-d Router** extends text-based prefix scheduling by tracking, hashing, and matching complex multimodal inputs (images, video, audio) across a distributed inference cluster. The goal is to intelligently direct incoming requests containing multimodal payloads to the specific backend worker that already holds the corresponding pre-computed key-value (KV) blocks in its memory.
 
 > [!NOTE]
-> This guide demonstrates one approach to prefix- and load-aware routing for multimodal workloads. The llm-d Router supports other options as well, including session affinity and active request based routing, which make no assumptions about the router's ability to parse the request or probe the servers. See [configuration](../architecture/core/router/epp/configuration.md) for more details on the available scorers, or [precise prefix cache routing](precise-prefix-cache-routing.md) for KV-event-driven scoring.
+> This guide builds upon the text-based [Optimized Baseline](optimized-baseline.md) and demonstrates one approach to prefix- and load-aware routing for multimodal workloads. The llm-d Router supports other options as well, including session affinity and active request based routing, which make no assumptions about the router's ability to parse the request or probe the servers. See [configuration](../architecture/core/router/epp/configuration.md) for more details on the available scorers, or [precise prefix cache routing](precise-prefix-cache-routing.md) for KV-event-driven scoring.
 
 ---
 
@@ -23,6 +23,10 @@ See the [multimodal optimized baseline guide](../../guides/multimodal-optimized-
 ## Architecture & Scheduling
 
 The llm-d Router schedules multimodal requests using prefix cache affinity and server load metrics.
+
+> [!NOTE]
+> For the high-level scheduling architecture flow and EPP load-balancing diagrams, see the [Optimized Baseline guide](optimized-baseline.md#architecture).
+
 
 ### Prefix-Aware Scheduling (Multimodal)
 
@@ -52,7 +56,7 @@ To resolve this boundary misalignment, EPP mathematically estimates ("guesses") 
 Estimate tokens based on image width and height:
 $$\text{Tokens} = \frac{\text{Image Width} \times \text{Image Height}}{\text{Factor}} + 2$$
 
-* The `Factor` parameter is configurable per-model:
+* The `Factor` parameter is configurable per-EPP:
   * For **Qwen 2.5 VL**: `factor = 784` (which is $28 \times 28$)
   * For **Qwen 3.5 VL**: `factor = 1024` (which is $32 \times 32$)
 
@@ -60,12 +64,7 @@ $$\text{Tokens} = \frac{\text{Image Width} \times \text{Image Height}}{\text{Fac
 Directly use fixed values from user configuration matching the model's support levels:
 * Gemma 4 supported values: 70, 140, 280 (default), 560, or 1120 tokens per image.
 
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)">
-    <img src="../assets/prefix-aware-routing.svg" alt="Prefix-Aware Routing">
-  </picture>
-</p>
+
 
 ---
 
@@ -73,16 +72,12 @@ Directly use fixed values from user configuration matching the model's support l
 
 EPP continuously probes each endpoints' metrics by scraping `/metrics` at a regular interval (50ms default). It scores endpoints on queue depth, running requests, and KV-cache utilization to schedule requests to the endpoint with the lowest load, avoiding hotspots caused by heterogeneous request patterns.
 
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)">
-    <img src="../assets/load-aware-routing.svg" alt="Load-Aware Routing">
-  </picture>
-</p>
+
 
 ---
 
 ## Further Reading
 
+* See [Optimized Baseline](optimized-baseline.md) for details on text-based scheduling and general load-balancing.
 * See [EPP Architecture](../architecture/core/router/epp/README.md) for more details.
 * See [KV-Cache Indexer](../advanced/kv-management/kv-indexer.md) for details on precise event-driven indexing.
