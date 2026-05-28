@@ -12,7 +12,7 @@ The multimodal-optimized-baseline defaults to two main routing criteria:
 
 | Parameter          | Value                                                   |
 | ------------------ | ------------------------------------------------------- |
-| Default Model      | [Qwen/Qwen3-32B](https://huggingface.co/Qwen/Qwen3-32B) |
+| Default Model      | [Qwen/Qwen3-VL-32B-Instruct](https://huggingface.co/Qwen/Qwen3-VL-32B-Instruct) |
 | Replicas           | 8                                                       |
 | Tensor Parallelism | 2                                                       |
 | GPUs per replica   | 2                                                       |
@@ -144,7 +144,7 @@ Send an OpenAI-compatible Chat Completion request containing a text prompt and a
 curl -X POST http://${IP}/v1/chat/completions \
     -H 'Content-Type: application/json' \
     -d '{
-        "model": "Qwen/Qwen3-32B",
+        "model": "Qwen/Qwen3-VL-32B-Instruct",
         "messages": [
             {
                 "role": "user",
@@ -156,7 +156,7 @@ curl -X POST http://${IP}/v1/chat/completions \
                     {
                         "type": "image_url",
                         "image_url": {
-                            "url": "https://picsum.photos/800/600"
+                            "url": "https://picsum.photos/640/360"
                         }
                     }
                 ]
