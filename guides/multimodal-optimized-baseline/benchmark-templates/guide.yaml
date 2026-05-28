@@ -1,6 +1,6 @@
 endpoint:
   stack_name: &stack_name inf-scheduling-Qwen3-VL-32B-Instruct  # user defined name for the stack (results prefix)
-  model: &model Qwen3-VL-32B-Instruct        # Exact HuggingFace model name. Must match stack deployed.
+  model: &model Qwen/Qwen3-VL-32B-Instruct        # Exact HuggingFace model name. Must match stack deployed.
   namespace: &namespace ${NAMESPACE}  # Namespace where stack is deployed
   base_url: &url http://${IP}  # Base URL of inference endpoint
   hf_token_secret: llm-d-hf-token     # The name of secret that contains the HF token of the stack
@@ -26,7 +26,6 @@ env:
     value: "4"
 
 workload:                         # yaml configuration for harness workload(s)
-
   # Workload A: High System Prompt to User Prompt ratio, No System Cache Pressure",
   Shared_prefix:
     load:
