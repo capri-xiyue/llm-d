@@ -17,6 +17,8 @@ spec:
             - "--port=8000"
             - "--disable-access-log-for-endpoints=/health,/metrics,/v1/models"
             - "--tensor-parallel-size=8"
+            - "--mm-processor-cache-gb"
+            - "20"
             # Uncomment for distributed tracing
             # - "--otlp-traces-endpoint=http://otel-collector:4317"
             # - "--collect-detailed-traces=all"

@@ -175,3 +175,31 @@ helm uninstall ${GUIDE_NAME} -n ${NAMESPACE}
 kubectl delete -n ${NAMESPACE} -k guides/${GUIDE_NAME}/modelserver/amd/vllm/
 kubectl delete namespace ${NAMESPACE}
 ```
+
+## Benchmarking Report
+
+The benchmark runs on 16 × H200 GPUs, distributed across 8 model servers (2 H200s per server with TP=2).
+
+### Comparing llm-d Routing to a Simple Kubernetes Service
+
+Graphs below compare optimized-baseline routing to a stock Kubernetes Service that round-robins requests across the same 8 vLLM pods (no EPP, no scoring).
+
+<img src="./benchmark-results/throughput_vs_qps.png" width="900" alt="Throughput vs QPS">
+<img src="./benchmark-results/latency_vs_qps.png" width="900" alt="Latency vs QPS">
+<img src="./benchmark-results/ttft_p90_vs_qps.png" width="900" alt="TTFT p90 vs QPS">
+
+<summary><b><i>Click</i></b> to view the per-rate breakdown across the full ladder</summary>
+
+Output tokens/sec — higher is better; TTFT in seconds — lower is better.
+
+| Rate | k8s Output | llm-d Output | k8s TTFT mean | llm-d TTFT mean | k8s TTFT p90 | llm-d TTFT p90 |
+|-----:|-----------:| -----------: | ------------: | --------------: | -----------: | -------------: |
+|    5 |  1,405.16  |   1,425.62   |     0.532     |      0.194      |   777.100    |    201.200     |
+|   10 |  2,792.99  |   2,844.20   |     0.678     |      0.164      | 1,154.900    |    204.700     |
+|   15 |  4,094.10  |   4,256.97   |     0.962     |      0.158      | 1,874.800    |    207.400     |
+|   20 |  5,275.50  |   5,636.65   |     1.962     |      0.158      | 4,136.900    |    212.800     |
+|   25 |  5,730.53  |   7,014.95   |     4.924     |      0.168      |12,305.800    |    239.500     |
+|   30 |  6,045.01  |   8,367.86   |    14.448     |      0.229      |32,267.500    |    394.000     |
+|   35 |  6,024.66  |   7,577.50   |    24.970     |      0.899      |50,178.200    |    618.900     |
+
+</details>
