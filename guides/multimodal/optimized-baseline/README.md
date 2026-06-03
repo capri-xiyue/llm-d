@@ -22,20 +22,15 @@ The multimodal-optimized-baseline defaults to two main routing criteria:
 
 This guide includes configurations for the following accelerators and inference backends:
 
-| Backend             | Directory Overlay | Notes |
-| ------------------- | ----------------- | ----- |
-| AMD GPU (vLLM)      | `modelserver/amd/vllm/` | ROCm-compatible AMD GPUs running vLLM |
-| Intel XPU           | `modelserver/xpu/vllm/` | Intel Data Center GPU Max 1550+ |
-| Intel Gaudi (HPU)   | `modelserver/hpu/vllm/` | Gaudi 1/2/3 with resource claim support |
-| Google TPU v6e      | `modelserver/tpu-v6/vllm/` | GKE Google TPU v6e running vLLM |
-| Google TPU v7       | `modelserver/tpu-v7/vllm/` | GKE Google TPU v7 running vLLM |
-| CPU                 | `modelserver/cpu/vllm/` | x86 CPUs running vLLM (development / test setups) |
+| Backend            | Directory                  | Notes                                      |
+| ------------------ | -------------------------- | ------------------------------------------ |
+| NVIDIA GPU         | `modelserver/gpu/vllm/${INFRA_PROVIDER}/`    | Default configuration (`INFRA_PROVIDER` options: `base`, `gke`)                      |
 
 ---
 
 ## Prerequisites
 
-1. Install the local client tooling using the [client setup guide](../../helpers/client-setup/README.md).
+1. Install the local client tooling using the [client setup guide](../../../helpers/client-setup/README.md).
 2. Clone and check out the llm-d repository:
    ```bash
    export branch="main" # branch, tag, or commit hash
@@ -45,7 +40,7 @@ This guide includes configurations for the following accelerators and inference 
    ```bash
    export GAIE_VERSION=v1.5.0
    export ROUTER_CHART_VERSION=v0
-   export GUIDE_NAME="multimodal-optimized-baseline"
+   export GUIDE_NAME="optimized-baseline"
    export NAMESPACE=llm-d-multimodal-optimized-baseline
    ```
 4. Install the Gateway API Inference Extension CRDs:
@@ -70,7 +65,7 @@ Deploy the llm-d Router in **Standalone Mode** overlaying router custom configur
 helm install ${GUIDE_NAME} \
     oci://ghcr.io/llm-d/charts/llm-d-router-standalone-dev \
     -f guides/recipes/router/base.values.yaml \
-    -f guides/${GUIDE_NAME}/router/${GUIDE_NAME}.values.yaml \
+    -f guides/multimodal/${GUIDE_NAME}/router/${GUIDE_NAME}.values.yaml \
     -n ${NAMESPACE} --version ${ROUTER_CHART_VERSION}
 ```
 
@@ -79,7 +74,7 @@ helm install ${GUIDE_NAME} \
 
 To use a Kubernetes Gateway managed proxy rather than the standalone version, follow these steps:
 
-1. _Deploy a Kubernetes Gateway_ named by following one of [the gateway guides](../prereq/gateways).
+1. _Deploy a Kubernetes Gateway_ named by following one of [the gateway guides](../../prereq/gateways).
 2. _Deploy the llm-d router and an HTTPRoute_ that connects it to the Gateway as follows:
 
 ```bash
@@ -87,7 +82,7 @@ export PROVIDER_NAME=gke # options: none, gke, agentgateway, istio
 helm install ${GUIDE_NAME} \
     oci://ghcr.io/llm-d/charts/llm-d-router-gateway-dev  \
     -f guides/recipes/router/base.values.yaml \
-    -f guides/${GUIDE_NAME}/router/${GUIDE_NAME}.values.yaml \
+    -f guides/multimodal/router/${GUIDE_NAME}.values.yaml \
     --set provider.name=${PROVIDER_NAME} \
     --set httpRoute.create=true \
     --set httpRoute.inferenceGatewayName=llm-d-inference-gateway \
@@ -98,14 +93,23 @@ helm install ${GUIDE_NAME} \
 
 ### 2. Deploy the Model Server
 
-Apply the Kustomize overlays matching your chosen backend tier. For example, to deploy on AMD GPU using vLLM:
+Apply the Kustomize overlays for your specific backend (defaulting to NVIDIA GPU / vLLM):
+
 ```bash
-kubectl apply -n ${NAMESPACE} -k guides/${GUIDE_NAME}/modelserver/amd/vllm/
+export INFRA_PROVIDER=base # base | gke
+kubectl apply -n ${NAMESPACE} -k guides/${GUIDE_NAME}/modelserver/gpu/vllm/${INFRA_PROVIDER}/
 ```
 
-To deploy on Intel Gaudi HPUs:
+### 3. (Optional) Enable monitoring
+
+> [!NOTE]
+> GKE provides [automatic application monitoring](https://docs.cloud.google.com/kubernetes-engine/docs/how-to/configure-automatic-application-monitoring) out of the box. The llm-d [Monitoring stack](../../docs/monitoring/README.md) is not required for GKE, but it is available if you prefer to use it.
+
+- Install the [Monitoring stack](../../docs/monitoring/README.md).
+- Deploy the monitoring resources for this guide.
+
 ```bash
-kubectl apply -n ${NAMESPACE} -k guides/${GUIDE_NAME}/modelserver/hpu/vllm/
+kubectl apply -n ${NAMESPACE} -k guides/recipes/modelserver/components/monitoring
 ```
 
 ---
@@ -184,9 +188,9 @@ The benchmark runs on 16 × H200 GPUs, distributed across 8 model servers (2 H20
 
 Graphs below compare optimized-baseline routing to a stock Kubernetes Service that round-robins requests across the same 8 vLLM pods (no EPP, no scoring).
 
-<img src="./benchmark-results/throughput_vs_qps.png" width="900" alt="Throughput vs QPS">
-<img src="./benchmark-results/latency_vs_qps.png" width="900" alt="Latency vs QPS">
-<img src="./benchmark-results/ttft_p90_vs_qps.png" width="900" alt="TTFT p90 vs QPS">
+<img src="benchmark-results/throughput_vs_qps.png" width="900" alt="Throughput vs QPS">
+<img src="benchmark-results/latency_vs_qps.png" width="900" alt="Latency vs QPS">
+<img src="benchmark-results/ttft_p90_vs_qps.png" width="900" alt="TTFT p90 vs QPS">
 
 <summary><b><i>Click</i></b> to view the per-rate breakdown across the full ladder</summary>
 

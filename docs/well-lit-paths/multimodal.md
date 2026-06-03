@@ -1,4 +1,4 @@
-# Multimodal Optimized Baseline
+# Multimodal
 
 Traditional HTTP requests are fast, uniform, and cheap. Standard round-robin request scheduling strategies balance this load well.
 
@@ -7,7 +7,9 @@ LLM requests break all three assumptions. Multimodal LLM requests (containing im
 * **Context Inflation** — A single high-resolution image, audio clip, or video file drastically inflates the context window (often by thousands of tokens).
 * **Heavy Prefill Cost** — Running vision/auditory encoders and prefilling thousands of tokens is highly resource-intensive.
 
-The **llm-d Router** extends text-based prefix scheduling by tracking, hashing, and matching complex multimodal inputs (images, video, audio) across a distributed inference cluster. The goal is to intelligently direct incoming requests containing multimodal payloads to the specific backend worker that already holds the corresponding pre-computed key-value (KV) blocks in its memory.
+The **llm-d Router** extends text-based prefix scheduling across both aggregated and disaggregated inference architectures by tracking, hashing, and matching complex multimodal payloads across a distributed cluster. 
+The router intelligently directs incoming requests to the specific backend worker that already hold the corresponding pre-computed encoder cache and key-value (KV) blocks in memory. 
+Whether operating in a unified topology or a decoupled pencode-prefill-decode landscape, this targeted routing maximizes hardware efficiency and eliminates redundant processing.
 
 > [!NOTE]
 > This guide builds upon the text-based [Optimized Baseline](optimized-baseline.md) and demonstrates one approach to prefix- and load-aware routing for multimodal workloads. The llm-d Router supports other options as well, including session affinity and active request based routing, which make no assumptions about the router's ability to parse the request or probe the servers. See [configuration](../architecture/core/router/epp/configuration.md) for more details on the available scorers, or [precise prefix cache routing](precise-prefix-cache-routing.md) for KV-event-driven scoring.
@@ -16,8 +18,11 @@ The **llm-d Router** extends text-based prefix scheduling by tracking, hashing, 
 
 ## Deploy
 
-See the [multimodal optimized baseline guide](../../guides/multimodal-optimized-baseline) for manifests and step-by-step deployment.
+### Multimodal Aggregated Guide
+See the [multimodal optimized baseline guide](../../guides/multimodal/optimized-baseline) for aggregated guide manifests and step-by-step deployment.
 
+### Multimodal Disaggregated Guide
+See the [multimodal optimized baseline guide](../../guides/multimodal/e-disaggregation) for disaggregated guide manifests and step-by-step deployment.
 ---
 
 ## Architecture & Scheduling
@@ -34,11 +39,11 @@ EPP maintains a view of each endpoints' prefix-cache state in memory. When a req
 
 For multimodal workloads, EPP guesses the size of multimodal placeholders in the prompt and folds visual/auditory asset signatures (e.g., image asset hashes) directly into EPP's block-key hashing chain.
 
-#### 1. Why Multimodal Prefix-Cache Aware Routing?
+#### Why Multimodal Prefix-Cache Aware Routing?
 * **Massive Compute Reduction:** Reusing the KV cache skips vision encoder and token prefill execution, saving highly resource-intensive GPU computations.
 * **Improved Time-To-First-Token (TTFT):** Routing requests with repeated visual contexts (e.g., shared reference templates, system prompt assets, or product photos) to the correct worker pod yields dramatic improvements in TTFT.
 
-#### 2. Text Hashing vs. Multimodal Alignment Mechanics
+#### Approximate Prefix-Cache Aware Routing
 
 To identify prefix matches without tokenizing prompts, EPP chunks incoming requests and hashes them sequentially:
 * **Character-Based Blocks:** Text is segmented into static blocks of a configured character size, completely bypassing tokenization.
@@ -64,7 +69,18 @@ $$\text{Tokens} = \frac{\text{Image Width} \times \text{Image Height}}{\text{Fac
 Directly use fixed values from user configuration matching the model's support levels:
 * Gemma 4 supported values: 70, 140, 280 (default), 560, or 1120 tokens per image.
 
+#### Precise Prefix-Cache Aware Routing
+Rather than relying on request-traffic heuristics or virtual token footprint estimations, this routing strategy bases scheduling decisions directly on the precise, real-time physical memory block states of individual model server pods.
+By eliminating approximation entirely, this precise strategy maximizes the Automatic Prefix Caching (APC) hit rate, driving down Time To First Token (TTFT) and eliminating unnecessary prefill recomputations.
+The precise-prefix-cache-scorer indexes real KV-block events from vLLM and returns the exact resident-block fraction.
 
+To prevent alse cache hits where different images share identical placeholder token IDs,
+Precise Prefix-Cache Aware Routing enforces a strict dual-path hashing alignment. 
+This guarantees that the ingestion path and the request scoring path compute identical, collision-free block keys for multimodal assets:
+* The Ingestion Path: When a backend emits a ZMQ memory event, each KV block carries an extra_keys payload containing (content_hash, offset) tuples. The router parses these into typed BlockExtraFeatures and injects them directly into the block’s chained hash calculation.
+* The Request Scoring Path: When a new request arrives, RenderChat queries the tokenizer service, returning explicit MultiModalFeatures (content hashes and placeholder ranges). The router maps these to per-block features using the same allocation algorithm vLLM runs internally.
+* Targeted Boundary Isolation: A block’s key is "tainted" by multimodal data only if its token range overlaps an image placeholder; text-only blocks remain unaffected. Because both the unique content hash and its physical block offset are baked into the final token processor mapping (TokensToKVBlockKeys), 
+the same image at a different position—or different images at the same position—will yield entirely unique block keys, eliminating false cache hits.
 
 ---
 
