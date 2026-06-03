@@ -22,7 +22,8 @@ Whether operating in a unified topology or a decoupled pencode-prefill-decode la
 See the [multimodal optimized baseline guide](../../guides/multimodal/optimized-baseline) for aggregated guide manifests and step-by-step deployment.
 
 ### Multimodal Disaggregated Guide
-See the [multimodal optimized baseline guide](../../guides/multimodal/e-disaggregation) for disaggregated guide manifests and step-by-step deployment.
+See the [multimodal e-disaggregation guide](../../guides/multimodal/e-disaggregation) for disaggregated guide manifests and step-by-step deployment.
+
 ---
 
 ## Architecture & Scheduling
