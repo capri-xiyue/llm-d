@@ -36,27 +36,15 @@ The llm-d Router schedules multimodal requests using prefix cache affinity and s
 
 ### Prefix-Aware Scheduling (Multimodal)
 
-EPP maintains a view of each endpoints' prefix-cache state in memory. When a request arrives, it identifies which pod already holds the matching prefix in KV-cache and routes the request there. 
+EPP maintains a view of each endpoints' prefix-cache state. When a request arrives, it identifies which pod already holds the matching prefix in KV-cache and routes the request there. 
 
-For multimodal workloads, EPP guesses the size of multimodal placeholders in the prompt and folds visual/auditory asset signatures (e.g., image asset hashes) directly into EPP's block-key hashing chain.
-
-#### Why Multimodal Prefix-Cache Aware Routing?
-* **Massive Compute Reduction:** Reusing the KV cache skips vision encoder and token prefill execution, saving highly resource-intensive GPU computations.
-* **Improved Time-To-First-Token (TTFT):** Routing requests with repeated visual contexts (e.g., shared reference templates, system prompt assets, or product photos) to the correct worker pod yields dramatic improvements in TTFT.
 
 #### Approximate Prefix-Cache Aware Routing
 
-To identify prefix matches without tokenizing prompts, EPP chunks incoming requests and hashes them sequentially:
-* **Character-Based Blocks:** Text is segmented into static blocks of a configured character size, completely bypassing tokenization.
-* **Chained Prefix Hashing:** Blocks are hashed sequentially. Each block's hash integrates the hash of its predecessor:
-  $$Hash(Chunk_i) = Hash(Content_i + Hash(Chunk_{i-1}))$$
-* **Historical Sequence Verification:** This chained structure guarantees prefix integrity: if a backend server matches Chunk $X$, it is mathematically guaranteed to hold matches for all preceding chunks ($0$ through $X-1$).
+For multimodal workloads, EPP guesses the size of multimodal placeholders in the prompt and folds visual/auditory asset signatures (e.g., image asset hashes) directly into EPP's block-key hashing chain.
+To identify prefix matches without tokenizing prompts, EPP chunks incoming requests and hashes them sequentially.
 
-However, when multimodal assets are mixed into the text stream, this character-based model breaks down. Because EPP cannot natively predict how many tokens an image, video, or audio asset will yield, EPP's chunk boundaries become completely misaligned with the physical memory blocks allocated on the model server. This misalignment introduces significant error:
-1. **Match Score Distortion:** The prefix match score—critical for scheduling decisions—becomes highly skewed.
-2. **LRU State Drift:** The proxy's simulated LRU eviction queue drifts rapidly from the actual cache state of the backends, resulting in routing false positives.
-
-To resolve this boundary misalignment, EPP mathematically estimates ("guesses") the virtual token footprint of each multimodal asset before performing character chunking. EPP uses two highly customizable **Token Estimation Strategies**:
+For multimodal EPP mathematically estimates ("guesses") the virtual token footprint of each multimodal asset before performing character chunking. EPP uses two highly customizable **Token Estimation Strategies**:
 
 ##### A. Dimension-Based Approximation (e.g., Qwen-VL)
 Estimate tokens based on image width and height:
@@ -88,8 +76,6 @@ the same image at a different position—or different images at the same positio
 ### Load-Aware Scheduling
 
 EPP continuously probes each endpoints' metrics by scraping `/metrics` at a regular interval (50ms default). It scores endpoints on queue depth, running requests, and KV-cache utilization to schedule requests to the endpoint with the lowest load, avoiding hotspots caused by heterogeneous request patterns.
-
-
 
 ---
 

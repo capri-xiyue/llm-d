@@ -22,7 +22,6 @@ router:
         - type: approx-prefix-cache-producer
           parameters:
             autoTune: true
-            maxPrefixBlocksToMatch: 512 
             multiModalTokenEstimator:
               image:
                 mode: dynamic
