@@ -28,23 +28,28 @@ See the [multimodal e-disaggregation guide](../../guides/multimodal/e-disaggrega
 
 ## Architecture & Scheduling
 
-The llm-d Router schedules multimodal requests using prefix cache affinity and server load metrics.
+The llm-d-router schedules multimodal requests using prefix cache affinity and server load metrics.
 
 > [!NOTE]
 > For the high-level scheduling architecture flow and EPP load-balancing diagrams, see the [Optimized Baseline guide](optimized-baseline.md#architecture).
 
 
-### Prefix-Aware Scheduling (Multimodal)
+### Prefix-Aware Scheduling
 
 EPP maintains a view of each endpoints' prefix-cache state. When a request arrives, it identifies which pod already holds the matching prefix in KV-cache and routes the request there. 
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)">
+    <img src="../assets/prefix-aware-routing.svg" alt="Prefix-Aware Routing">
+  </picture>
+</p>
 
 #### Approximate Prefix-Cache Aware Routing
 
-For multimodal workloads, EPP guesses the size of multimodal placeholders in the prompt and folds visual/auditory asset signatures (e.g., image asset hashes) directly into EPP's block-key hashing chain.
-To identify prefix matches without tokenizing prompts, EPP chunks incoming requests and hashes them sequentially.
+EPP maintains a view of each endpoints' prefix-cache state in memory including both text and multi-modality assets, and prioritizes routing an incoming request to an endpoint that has high prefix cache matching. Extending from its approximate prefix cache matching algorithm for text input, EPP mathematically estimates the virtual token footprint of each multimodal asset. 
 
-For multimodal EPP mathematically estimates ("guesses") the virtual token footprint of each multimodal asset before performing character chunking. EPP uses two highly customizable **Token Estimation Strategies**:
+EPP uses two highly customizable **Token Estimation Strategies**:
 
 ##### A. Dimension-Based Approximation (e.g., Qwen-VL)
 Estimate tokens based on image width and height:
@@ -59,23 +64,21 @@ Directly use fixed values from user configuration matching the model's support l
 * Gemma 4 supported values: 70, 140, 280 (default), 560, or 1120 tokens per image.
 
 #### Precise Prefix-Cache Aware Routing
-Rather than relying on request-traffic heuristics or virtual token footprint estimations, this routing strategy bases scheduling decisions directly on the precise, real-time physical memory block states of individual model server pods.
-By eliminating approximation entirely, this precise strategy maximizes the Automatic Prefix Caching (APC) hit rate, driving down Time To First Token (TTFT) and eliminating unnecessary prefill recomputations.
-The precise-prefix-cache-scorer indexes real KV-block events from vLLM and returns the exact resident-block fraction.
 
-To prevent alse cache hits where different images share identical placeholder token IDs,
-Precise Prefix-Cache Aware Routing enforces a strict dual-path hashing alignment. 
-This guarantees that the ingestion path and the request scoring path compute identical, collision-free block keys for multimodal assets:
-* The Ingestion Path: When a backend emits a ZMQ memory event, each KV block carries an extra_keys payload containing (content_hash, offset) tuples. The router parses these into typed BlockExtraFeatures and injects them directly into the block’s chained hash calculation.
-* The Request Scoring Path: When a new request arrives, RenderChat queries the tokenizer service, returning explicit MultiModalFeatures (content hashes and placeholder ranges). The router maps these to per-block features using the same allocation algorithm vLLM runs internally.
-* Targeted Boundary Isolation: A block’s key is "tainted" by multimodal data only if its token range overlaps an image placeholder; text-only blocks remain unaffected. Because both the unique content hash and its physical block offset are baked into the final token processor mapping (TokensToKVBlockKeys), 
-the same image at a different position—or different images at the same position—will yield entirely unique block keys, eliminating false cache hits.
+This routing strategy bases routing decisions directly on the precise, real-time physical memory block states of individual model server endpoints. It requires the router to tokenize the input, and subscribe to the KV-events channels of model server endpoints. Internally the router maintains an **indexer** which maintains a `block key → model server endpoints` mapping for every block resident across the fleet. For incoming requests the router breaks the tokenized input into blocks and c matches the blocks keys with the indexer to determine which model server endpoint has the longest prefix match. Multi-modal assets are converted to block keys considering the asset hash and size so that they are correctly accounted.
 
 ---
 
-### Load-Aware Scheduling
+### Load-Aware Routing
 
 EPP continuously probes each endpoints' metrics by scraping `/metrics` at a regular interval (50ms default). It scores endpoints on queue depth, running requests, and KV-cache utilization to schedule requests to the endpoint with the lowest load, avoiding hotspots caused by heterogeneous request patterns.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)">
+    <img src="../assets/load-aware-routing.svg" alt="Load-Aware Routing">
+  </picture>
+</p>
 
 ---
 
