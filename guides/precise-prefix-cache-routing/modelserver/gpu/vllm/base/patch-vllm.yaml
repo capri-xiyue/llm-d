@@ -10,13 +10,15 @@ spec:
         - name: modelserver
           command: ["vllm", "serve"]
           args:
-            - "Qwen/Qwen3-32B"
+            - "Qwen/Qwen3-VL-32B-Instruct"
             - "--disable-access-log-for-endpoints=/health,/metrics,/v1/models"
             - "--tensor-parallel-size=2"
             - "--block-size=64"
+            - "--mm-processor-cache-gb"
+            - "20"
             - "--gpu-memory-utilization=0.95"
             - "--kv-events-config"
-            - '{"enable_kv_cache_events":true,"publisher":"zmq","endpoint":"$(KV_EVENTS_ENDPOINT)","topic":"kv@$(POD_IP):$(POD_PORT)@Qwen/Qwen3-32B"}'
+            - '{"enable_kv_cache_events":true,"publisher":"zmq","endpoint":"$(KV_EVENTS_ENDPOINT)","topic":"kv@$(POD_IP):$(POD_PORT)@Qwen/Qwen3-VL-32B-Instruct"}'
             # Uncomment for distributed tracing
             # - "--otlp-traces-endpoint=http://otel-collector:4317"
             # - "--collect-detailed-traces=all"
@@ -57,11 +59,11 @@ spec:
           resources:
             limits:
               cpu: '16'
-              memory: 128Gi
+              memory: 256Gi
               nvidia.com/gpu: 2
             requests:
               cpu: '8'
-              memory: 96Gi
+              memory: 128Gi
               nvidia.com/gpu: 2
           volumeMounts:
             - mountPath: /dev/shm

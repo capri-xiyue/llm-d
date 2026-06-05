@@ -9,12 +9,12 @@ namePrefix: precise-prefix-cache-routing-gpu-vllm-
 images:
   - name: REPLACE_MODEL_SERVER_IMAGE
     newName: vllm/vllm-openai
-    newTag: v0.19.1
+    newTag: v0.21.0
 
 labels:
   - pairs:
       llm-d.ai/guide: precise-prefix-cache-routing
-      llm-d.ai/model: Qwen3-32B
+      llm-d.ai/model: Qwen3-VL-32B-Instruct
       llm-d.ai/accelerator-variant: gpu
       llm-d.ai/accelerator-vendor: nvidia
     includeSelectors: true
