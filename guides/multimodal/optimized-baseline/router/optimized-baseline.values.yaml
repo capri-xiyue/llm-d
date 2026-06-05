@@ -30,8 +30,6 @@ router:
                 dynamic:
                   factor: 1024
         - type: approx-prefix-cache-producer
-          parameters:
-            autoTune: true
         schedulingProfiles:
         - name: default
           plugins:
