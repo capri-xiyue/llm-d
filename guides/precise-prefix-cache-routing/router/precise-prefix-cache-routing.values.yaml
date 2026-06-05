@@ -14,7 +14,7 @@ router:
     enabled: true
     # Required by llm-d-router chart v0 when tokenizer is enabled;
     # must match the deployed model server and the token-producer modelName below
-    modelName: Qwen/Qwen3-32B
+    modelName: Qwen/Qwen3-VL-32B-Instruct
 
   epp:
     replicas: 2
