@@ -43,6 +43,7 @@ router:
               modelName: Qwen/Qwen3-VL-32B-Instruct # Must match router.tokenizer.modelName above
               vllm:
                 url: "http://localhost:8000"
+                mmTimeout: 120s
           - type: endpoint-notification-source
           - type: precise-prefix-cache-producer # `precise-prefix-cache-scorer` is deprecated
             parameters:
@@ -64,6 +65,8 @@ router:
           - type: kv-cache-utilization-scorer
           - type: queue-scorer
           - type: no-hit-lru-scorer
+            parameters:
+              prefixMatchInfoProducerName: precise-prefix-cache-producer
         dataLayer: # metrics-data-source + core-metrics-extractor injected by default
           sources:
             - pluginRef: endpoint-notification-source
