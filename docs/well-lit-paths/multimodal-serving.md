@@ -11,7 +11,6 @@ The **llm-d Router** extends text-based prefix scheduling across both aggregated
 The router intelligently directs incoming requests to the specific backend worker that already hold the corresponding pre-computed encoder cache and key-value (KV) blocks in memory. 
 Whether operating in a unified topology or a decoupled pencode-prefill-decode landscape, this targeted routing maximizes hardware efficiency and eliminates redundant processing.
 
-> [!NOTE]
 
 ---
 
