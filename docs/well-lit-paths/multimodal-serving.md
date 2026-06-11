@@ -12,7 +12,6 @@ The router intelligently directs incoming requests to the specific backend worke
 Whether operating in a unified topology or a decoupled pencode-prefill-decode landscape, this targeted routing maximizes hardware efficiency and eliminates redundant processing.
 
 > [!NOTE]
-> This guide builds upon the text-based [Optimized Baseline](optimized-baseline.md) and demonstrates one approach to prefix- and load-aware routing for multimodal workloads. The llm-d Router supports other options as well, including session affinity and active request based routing, which make no assumptions about the router's ability to parse the request or probe the servers. See [configuration](../architecture/core/router/epp/configuration.md) for more details on the available scorers, or [precise prefix cache routing](precise-prefix-cache-routing.md) for KV-event-driven scoring.
 
 ---
 
