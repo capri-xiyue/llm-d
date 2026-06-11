@@ -1,4 +1,4 @@
-# Multimodal Inference Optimized Baseline Guide
+# Multimodal Optimized Baseline Guide
 
 This guide deploys the recommended [configuration](https://github.com/llm-d/llm-d-router/blob/main/docs/architecture.md) for multimodal vLLM deployments, reducing tail latency and increasing throughput through load-aware and prefix-cache aware balancing.
 
