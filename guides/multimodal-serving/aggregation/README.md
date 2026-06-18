@@ -41,8 +41,8 @@ This guide includes configurations for the following accelerators and inference 
    ```bash
    export GAIE_VERSION=v1.5.0
    export ROUTER_CHART_VERSION=v0
-   export GUIDE_NAME="optimized-baseline"
-   export NAMESPACE=llm-d-multimodal-optimized-baseline
+   export GUIDE_NAME="aggregation"
+   export NAMESPACE=llm-d-multimodal-aggregation
    ```
 4. Install the Gateway API Inference Extension CRDs:
    ```bash
