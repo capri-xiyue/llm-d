@@ -1,10 +1,11 @@
 # Multimodal Workload Serving
 
+Multimodal inputs are fundamentally changing the shape of production LLM traffic. 
+A single prompt expands beyond text to include dense, non-text modalities—high-resolution images, video frames, or audio clips. 
 Traditional HTTP requests are fast, uniform, and cheap. Standard round-robin request scheduling strategies balance this load well.
-
 LLM requests break all three assumptions. Multimodal LLM requests (containing images, video, or audio) break them even further:
 
-* **Context Inflation** — A single high-resolution image, audio clip, or video file drastically inflates the context window (often by thousands of tokens).
+* **Massive Context Inflation** — A single high-resolution image, audio clip, or video file drastically inflates the context window (often by thousands of tokens).
 * **Heavy Prefill Cost** — Running vision/auditory encoders and prefilling thousands of tokens is highly resource-intensive.
 
 The **llm-d Router** extends text-based prefix scheduling across both aggregated and disaggregated inference architectures by tracking, hashing, and matching complex multimodal payloads across a distributed cluster.
@@ -13,11 +14,20 @@ Whether operating in a unified topology or a decoupled pencode-prefill-decode la
 
 ---
 
+## Canonical Multimodal Workloads
+Our multimodal systems anchor their work to concrete workload shapes, each stressing the underlying technical stack in fundamentally different ways:
+
+- **Real-time Streaming Interaction** (e.g., full-duplex voice/vision assistants, real-time translation): The model continuously receives and processes streams of audio chunks or video frames while delivering immediate, overlapping responses. This stresses continuous prefill, dynamic KV cache allocation for unbounded data streams, ultra-low time-to-first-audio-token (TTFAT) or text token (TTFT), and strict cross-modality timestamp synchronization.
+
+- **Massive Context Vision/Audio Analysis** (e.g., long-form video understanding, ultra-high-resolution multi-image QA): A single prompt consumes tens to hundreds of thousands of dense visual or audio tokens. This stresses massive prefill compute, aggressive vision/audio token compression and pooling mechanisms, extreme per-request multi-modal KV footprints, and sparse attention efficiency over highly heterogeneous data.
+
+- **Embodied & Spatial-Temporal Loops** (e.g., robotics control, autonomous driving visual decision-making, 3D navigation agents): The system processes high-frequency inputs of new observation frames (often with minimal visual delta between frames) to output rapid control actions. This stresses high-frequency prefix caching (specifically, marrying static background caching with dynamic foreground updates), ultra-fast end-to-end inference-to-action control loop latency, and stateful visual history retention.
+
 ## Deploy
 
 ### Multimodal Aggregated Guide
 
-See the [multimodal optimized baseline guide](../../../guides/multimodal-serving/optimized-baseline) for aggregated guide manifests and step-by-step deployment.
+See the [multimodal aggregation guide](../../../guides/multimodal-serving/aggregation) for aggregated guide manifests and step-by-step deployment.
 
 ### Multimodal Disaggregated Guide
 
@@ -33,15 +43,6 @@ The llm-d-router schedules multimodal requests using prefix cache affinity and s
 > For the high-level scheduling architecture flow and EPP load-balancing diagrams, see the [Optimized Baseline guide](../capabilities/optimized-baseline.md#architecture).
 
 ### Prefix-Aware Scheduling
-
-EPP maintains a view of each endpoints' prefix-cache state. When a request arrives, it identifies which pod already holds the matching prefix in KV-cache and routes the request there.
-
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)">
-    <img src="../../assets/prefix-aware-routing.svg" alt="Prefix-Aware Routing">
-  </picture>
-</p>
 
 #### Approximate Prefix-Cache Aware Routing
 
@@ -74,13 +75,6 @@ For incoming requests the router breaks the tokenized input into blocks and matc
 ### Load-Aware Routing
 
 EPP continuously probes each endpoints' metrics by scraping `/metrics` at a regular interval (50ms default). It scores endpoints on queue depth, running requests, and KV-cache utilization to schedule requests to the endpoint with the lowest load, avoiding hotspots caused by heterogeneous request patterns.
-
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)">
-    <img src="../../assets/load-aware-routing.svg" alt="Load-Aware Routing">
-  </picture>
-</p>
 
 ---
 
