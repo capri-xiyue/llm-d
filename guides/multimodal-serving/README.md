@@ -4,14 +4,14 @@ Multimodal models (such as `Qwen/Qwen3-VL-32B-Instruct`) process combinations of
 
 `llm-d` supports two distinct architectural patterns for serving multimodal models:
 
-1. **Aggregated Serving (Optimized Baseline)**: Standard deployments where the entire inference lifecycle (multimodal encode, prefill, and decode) is executed on the same model server replica.
+1. **Aggregated Serving (Aggregation)**: Standard deployments where the entire inference lifecycle (multimodal encode, prefill, and decode) is executed on the same model server replica.
 2. **Encode-Disaggregated Serving (E-Disaggregation)**: Advanced topologies where the heavy multimodal encoding phase is offloaded to specialized, dedicated worker pools.
 
 ---
 
 ## Guide Index
 
-* **[Aggregated Serving (Optimized Baseline) Guide](./aggregation/README.md)**: Deploy a unified serving topology with prefix-cache and load-aware routing that tracks and matches multimodal payloads across model servers.
+* **[Aggregated Serving (Aggregation) Guide](./aggregation/README.md)**: Deploy a unified serving topology with prefix-cache and load-aware routing that tracks and matches multimodal payloads across model servers.
 * **[Encode-Disaggregated Serving (E-Disaggregation) Guide](./e-disaggregation/README.md)**: Deploy specialized multi-tier topologies (**E/PD** or **E/P/D**) to offload vision encoding to dedicated nodes and transfer embeddings over high-performance NIXL dataplanes.
 
 ---
@@ -73,7 +73,7 @@ The table below contrasts Aggregated Serving against Encode-Disaggregated Servin
 
 ### Choose Encode-Disaggregated Serving (E-Disaggregation) if:
 * Your requests frequently contain **large or multiple media assets** (e.g., document parsing with dozens of images, high-definition videos, or long audio tracks).
-* Your model is large
+* Your model is large.
 * The Vision Encoder is extremely heavy, and running it on standard text generation pods stalls the sequential decoding phase.
 * You want to scale the encoding tier independently (e.g., using GPUs optimized for vision tasks and separate GPUs/TPUs specialized for text generation).
 * You want to process multiple media inputs within a single request **concurrently** across different nodes.
