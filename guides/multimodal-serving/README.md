@@ -67,7 +67,6 @@ The table below contrasts Aggregated Serving against Encode-Disaggregated Servin
 ### Choose Aggregated Serving (Aggregation) if:
 * Your multimodal inputs are relatively small (e.g., low-resolution images).
 * Your model is small.
-* The model's vision encoder component has minimal overhead relative to text processing.
 * You prefer lower deployment complexity and do not want to configure multi-tier networking (NIXL/ZMQ) across different pods.
 * You already have a strong prefix-cache hit rate, which mitigates redundant encoding.
 
