@@ -24,7 +24,7 @@ Before installing WVA, ensure you have:
 1. Installed the [optimized-baseline well-lit path guide](../optimized-baseline/README.md).
 
 > [!NOTE]
-> Make sure to enable deploy the monitoring resources as described in the [optimized-baseline well-lit path guide](../optimized-baseline/README.md#3-optional-enable-monitoring).
+> Make sure to deploy the monitoring resources as described in the [optimized-baseline well-lit path guide](../optimized-baseline/README.md#3-optional-enable-monitoring).
 
 ## Set Namespaces
 
@@ -35,13 +35,16 @@ export NAMESPACE=llm-d-optimized-baseline
 # Namespace for WVA controller - default to the same namespace as the inference deployment for simplicity, but can be different for cluster-wide autoscaling
 export WVA_NAMESPACE=${NAMESPACE}
 
+# Namespace where the monitoring stack (Prometheus) was installed by the prerequisites
+export MONITORING_NAMESPACE=llm-d-monitoring
+
 export REPO_ROOT=$(realpath $(git rev-parse --show-toplevel))
 ```
 
 ## Installation
 
 > [!NOTE]
-> **Namespaced-Scoped Installation**: this guide installs WVA in namespaced-scoped mode in the `llm-d-optimized-baseline` namespace and configure to watch resources only in that namespace (`--watch-namespace=llm-d-optimized-baseline`). For cluster-wide autoscaling, set `--watch-namespace=""` in the controller deployment.
+> **Namespace-Scoped Installation**: this guide installs WVA in namespace-scoped mode in the `llm-d-optimized-baseline` namespace and configures it to watch resources only in that namespace (`--watch-namespace=llm-d-optimized-baseline`). For cluster-wide autoscaling, set `--watch-namespace=""` in the controller deployment.
 
 1. Choose your platform:
 
@@ -81,13 +84,13 @@ export REPO_ROOT=$(realpath $(git rev-parse --show-toplevel))
 5. Install WVA CRDs:
 
     ```bash
-    kubectl apply -k github.com/llm-d/llm-d-workload-variant-autoscaler/config/base/crd?ref=main
+    kubectl apply -k github.com/llm-d/llm-d-workload-variant-autoscaler/config/base/crd?ref=release-0.8
     ```
 
 6. Install WVA controller with Kustomize:
 
     ```bash
-    kubectl apply -k guides/workload-autoscaling/wva-config/platform/${PLATFORM} -n ${NAMESPACE}
+    kubectl apply -k ${REPO_ROOT}/guides/workload-autoscaling/wva-config/platform/${PLATFORM} -n ${WVA_NAMESPACE}
     ```
 
 ## Verify Installation
@@ -183,7 +186,7 @@ kubectl delete -k optimized-baseline-autoscaling/ -n ${NAMESPACE}
 Remove the WVA controller with Kustomize:
 
 ```bash
-kubectl delete -k guides/workload-autoscaling/wva-config/platform/${PLATFORM} -n ${WVA_NAMESPACE}
+kubectl delete -k ${REPO_ROOT}/guides/workload-autoscaling/wva-config/platform/${PLATFORM} -n ${WVA_NAMESPACE}
 ```
 
 If you installed Prometheus Adapter for WVA, you can uninstall it as well:
