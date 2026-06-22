@@ -14,15 +14,6 @@ Whether operating in a unified topology or a decoupled pencode-prefill-decode la
 
 ---
 
-## Canonical Multimodal Workloads
-Our multimodal systems anchor their work to concrete workload shapes, each stressing the underlying technical stack in fundamentally different ways:
-
-- **Real-time Streaming Interaction** (e.g., full-duplex voice/vision assistants, real-time translation): The model continuously receives and processes streams of audio chunks or video frames while delivering immediate, overlapping responses. This stresses continuous prefill, dynamic KV cache allocation for unbounded data streams, ultra-low time-to-first-audio-token (TTFAT) or text token (TTFT), and strict cross-modality timestamp synchronization.
-
-- **Massive Context Vision/Audio Analysis** (e.g., long-form video understanding, ultra-high-resolution multi-image QA): A single prompt consumes tens to hundreds of thousands of dense visual or audio tokens. This stresses massive prefill compute, aggressive vision/audio token compression and pooling mechanisms, extreme per-request multi-modal KV footprints, and sparse attention efficiency over highly heterogeneous data.
-
-- **Embodied & Spatial-Temporal Loops** (e.g., robotics control, autonomous driving visual decision-making, 3D navigation agents): The system processes high-frequency inputs of new observation frames (often with minimal visual delta between frames) to output rapid control actions. This stresses high-frequency prefix caching (specifically, marrying static background caching with dynamic foreground updates), ultra-fast end-to-end inference-to-action control loop latency, and stateful visual history retention.
-
 ## Deploy
 
 ### Multimodal Aggregated Guide
