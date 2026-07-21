@@ -39,13 +39,13 @@ router:
                   mode: dynamic
                   dynamic:
                     factor: 1024
-                  frames:
-                    mode: sampled
-                    maxFrames: 768
-                    minFrames: 4
-                    sampled:
-                      sampleFPS: 2
-                      temporalPatchSize: 2      
+                frames:
+                  mode: sampled
+                  maxFrames: 768
+                  minFrames: 4
+                  sampled:
+                    sampleFPS: 2
+                    temporalPatchSize: 2      
         - type: approx-prefix-cache-producer
         schedulingProfiles:
         - name: default
