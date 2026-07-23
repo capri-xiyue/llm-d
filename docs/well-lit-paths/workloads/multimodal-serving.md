@@ -43,6 +43,7 @@ EPP uses two highly customizable **Token Estimation Strategies**:
 
 ##### A. Dimension-Based Approximation (e.g., Qwen-VL)
 
+###### Image
 Estimate tokens based on image width and height:
 $$\text{Tokens} = \frac{\text{Image Width} \times \text{Image Height}}{\text{Factor}}$$
 
@@ -50,11 +51,64 @@ $$\text{Tokens} = \frac{\text{Image Width} \times \text{Image Height}}{\text{Fac
   * For **Qwen 2.5 VL**: `factor = 784` (which is $28 \times 28$)
   * For **Qwen 3.5 VL**: `factor = 1024` (which is $32 \times 32$)
 
+###### Video
+
+Estimate tokens as the per-frame token count multiplied by the number of sampled frames:
+$$\text{Tokens} = \text{tokensPerFrame} \times \text{Number of frames}$$
+
+* **tokensPerFrame** — in `dynamic` mode this reuses the image formula ($\text{width} \times \text{height} / \text{factor}$).
+* **Number of frames** — Qwen3-VL uses the **sampled** strategy: the video is sampled at `sampleFPS`, clamped to `[minFrames, maxFrames]`, then every `temporalPatchSize` sampled frames are merged into one token group:
+$$\text{Number of frames} = \frac{\text{clamp}(\text{duration} \times \text{sampleFPS},\ \text{minFrames},\ \text{maxFrames})}{\text{temporalPatchSize}}$$
+
+The total is capped by `maxVideoTokens`. Example per-EPP config for Qwen3-VL:
+
+```yaml
+estimate:
+  video:
+    tokensPerFrame:
+      mode: dynamic
+      dynamic:
+        factor: 1024          # 32 × 32
+    frames:
+      mode: sampled
+      minFrames: 4
+      sampled:
+        sampleFPS: 2
+        temporalPatchSize: 2
+    maxVideoTokens: 12288
+```
+
 ##### B. Configuration-Based Fixed Allocation (e.g., Gemma 4)
 
 Directly use fixed values from user configuration matching the model's support levels:
 
+###### Image
 * Gemma 4 supported values: 70, 140, 280 (default), 560, or 1120 tokens per image.
+
+###### Video
+
+Estimate tokens as the fixed per-frame allocation multiplied by the number of frames:
+$$\text{Tokens} = \text{tokensPerFrame} \times \text{Number of frames}$$
+
+* **tokensPerFrame** — a constant per-frame value taken directly from user configuration (`static` mode).
+* **Number of frames** — Gemma 4 uses the **strided** strategy: frames are taken every `frameStride` source frames, clamped to `[minFrames, maxFrames]`:
+$$\text{Number of frames} = \text{clamp}\left(\frac{\text{duration} \times \text{sourceFPS}}{\text{frameStride}},\ \text{minFrames},\ \text{maxFrames}\right)$$
+
+Example per-EPP config for Gemma 4:
+
+```yaml
+estimate:
+  video:
+    tokensPerFrame:
+      mode: static
+      static:
+        numTokensPerFrame: 296
+    frames:
+      mode: strided
+      maxFrames: 8
+      strided:
+        frameStride: 4
+```
 
 #### Precise Prefix-Cache Aware Routing
 
