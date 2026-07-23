@@ -82,6 +82,7 @@ estimate:
     frames:
       mode: sampled
       minFrames: 4
+      maxFrames: 768
       sampled:
         sampleFPS: 2
         temporalPatchSize: 2
@@ -115,6 +116,7 @@ estimate:
         numTokensPerFrame: 296
     frames:
       mode: strided
+      minFrames: 1
       maxFrames: 8
       strided:
         frameStride: 4
