@@ -41,6 +41,16 @@ EPP maintains a view of each endpoints' prefix-cache state in memory including b
 
 EPP uses two highly customizable **Token Estimation Strategies**:
 
+##### Providing Asset Metadata
+
+Both strategies need per-asset metadata (dimensions for images; duration, FPS, and resolution for video) to estimate an asset's token footprint. EPP resolves this metadata as follows:
+
+* **Images** — When an image is embedded inline (raw bytes) in the request, EPP reads its width and height directly from the image content. When an image is supplied as a URL, EPP does **not** fetch the remote content and falls back to its configured defaults.
+* **Video** — EPP cannot inspect video content directly, so clients should supply video metadata via request headers. Any header that is omitted falls back to the corresponding EPP default:
+  * `x-llm-d-video-fps` — the video's frames per second.
+  * `x-llm-d-video-duration-seconds` — the video's length in seconds.
+  * `x-llm-d-video-resolution` — the video frame resolution as `WIDTHxHEIGHT` (e.g. `1280x720`).
+
 ##### A. Dimension-Based Approximation (e.g., Qwen-VL)
 
 ###### Image
